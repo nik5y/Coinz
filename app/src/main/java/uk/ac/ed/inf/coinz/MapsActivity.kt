@@ -102,7 +102,7 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
-    // Permissions listener:
+    /// Permissions listener:
 
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
         //Present a toast or a dialog explainging why they should provide access
