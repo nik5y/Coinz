@@ -75,19 +75,19 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        //Restore preferences
+       /* //Restore preferences
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
 
         //use "" as the default value (this might be the first time the app is run
         downloadDate = settings.getString("lastDownloadDate","")
 
         //Write a message to "logcat" (for debugging purposes)
-        Log.d(tag, "[onStart] Recalled lastDownloadDate is '$downloadDate'")
+        Log.d(tag, "[onStart] Recalled lastDownloadDate is '$downloadDate'")*/
     }
 
     // Wed Oct 3 Download stuff:
 
-    interface DownloadCompleteListener {
+    /*interface DownloadCompleteListener {
         fun downloadComplete(result: String)
     }
 
@@ -97,6 +97,6 @@ class MainActivity : AppCompatActivity() {
             this.result = result
         }
     }
-
+*/
 
 }

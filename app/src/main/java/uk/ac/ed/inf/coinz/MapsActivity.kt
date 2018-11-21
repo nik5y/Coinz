@@ -1,8 +1,10 @@
 package uk.ac.ed.inf.coinz
 
 import android.location.Location
+import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
@@ -19,54 +21,143 @@ import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
 import kotlinx.android.synthetic.main.activity_main.*
+import uk.ac.ed.inf.coinz.MapsActivity.DownloadCompleteRunner.result
 import uk.ac.ed.inf.coinz.R.id.toolbar
+import java.io.IOException
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 class MapsActivity : AppCompatActivity(),
-        PermissionsListener, LocationEngineListener {
+        PermissionsListener, LocationEngineListener, OnMapReadyCallback {
 
     private val tag = "MapsActivity"
 
-    private lateinit var mapView: MapView
-    private lateinit var map: MapboxMap
+    private var mapView: MapView? = null
+    private var map: MapboxMap? = null
     private lateinit var permissionManager: PermissionsManager
     private lateinit var originLocation: Location
 
-    private var locationEngine : LocationEngine? = null
+    private lateinit var locationEngine : LocationEngine
 
-    private var locationLayerPlugin: LocationLayerPlugin? = null
+    private lateinit var locationLayerPlugin: LocationLayerPlugin
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-        //setSupportActionBar(toolbar)
+        // setSupportActionBar(toolbar)
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
 
         mapView = findViewById(R.id.mapView)
-        mapView.onCreate(savedInstanceState)
-        mapView.getMapAsync (
-            object: OnMapReadyCallback {
+        mapView?.onCreate(savedInstanceState)
+        mapView?.getMapAsync (this)
+    }
 
-                override fun onMapReady(mapboxMap: MapboxMap) {
-                    map = mapboxMap
+    override fun onMapReady(mapboxMap: MapboxMap?) {
+
+        //downloading
+
+        var date = SimpleDateFormat("yyyy/MM/dd").format(Date())
+        var mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
+
+        var coins : String = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
 
 
-                    map.uiSettings.isCompassEnabled = true
-                    map.uiSettings.isZoomControlsEnabled = true
 
-                    enableLocation()
-                }
+        map = mapboxMap
+
+
+        //location
+
+        enableLocation()
+    }
+
+
+
+    //DOWNLOADER
+
+    interface DownloadCompleteListener {
+        fun downloadComplete(result:String)
+    }
+
+    object DownloadCompleteRunner : DownloadCompleteListener {
+        var result: String? = null
+        override fun downloadComplete(result: String) {
+            this.result = result
+        }
+    }
+
+    class DownloadFileTask(private val caller : DownloadCompleteListener) :
+            AsyncTask<String, Void, String>() {
+        override fun doInBackground(vararg urls: String): String = try {
+            loadFileFromNetwork(urls[0])
+        } catch (e: IOException) {
+            "Unable to load content. Check your network connection."
+        }
+
+        private fun loadFileFromNetwork(urlString:String): String {
+
+            val stream : InputStream = downloadUrl(urlString)
+            //read input from stream, build result as a string
+            val result : String = stream.bufferedReader().use { it.readText() }
+
+            return result
+        }
+
+        //given a string representation of a url, sets up a connection
+        //and gets an input stream
+        @Throws(IOException::class)
+        private fun downloadUrl(urlString: String): InputStream {
+            var url = URL(urlString)
+            var conn = url.openConnection() as HttpURLConnection
+            conn.apply{
+                readTimeout = 10000
+                connectTimeout = 15000
+                requestMethod = "GET"
+                doInput = true
+                connect() // starts the query
             }
+            return conn.inputStream
+        }
 
-        )
+        override fun onPostExecute(result: String) {
+            super.onPostExecute(result)
+            caller.downloadComplete(result)
+
+        }
 
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     fun enableLocation() {
         if(PermissionsManager.areLocationPermissionsGranted(this)) {
+            Log.d(tag, "Permissions are granted")
             initialiseLocationEngine()
             initialiseLocationLayer()
         } else {
+            Log.d(tag,"Permissions are not granted")
             permissionManager = PermissionsManager(this)
             permissionManager.requestLocationPermissions(this)
         }
@@ -76,41 +167,58 @@ class MapsActivity : AppCompatActivity(),
     private fun initialiseLocationEngine() {
 
         locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()
-        locationEngine?.priority = LocationEnginePriority.HIGH_ACCURACY
-        locationEngine?.activate()
+        locationEngine.apply {
 
-        val lastLocation = locationEngine?.lastLocation
+            interval = 5000
+            fastestInterval = 1000
+            priority = LocationEnginePriority.HIGH_ACCURACY
+            activate()
+        }
+        val lastLocation : Location? = locationEngine.lastLocation
         if (lastLocation != null) {
             originLocation = lastLocation
             setCameraPosition(lastLocation)
         } else {
-            locationEngine?.addLocationEngineListener(this)
+            locationEngine.addLocationEngineListener(this)
         }
-    }
-
-    private fun setCameraPosition(location: Location) {
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                LatLng(location.latitude, location.longitude), 15.0))
     }
 
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationLayer() {
-        locationLayerPlugin = LocationLayerPlugin(mapView,map, locationEngine)
-        locationLayerPlugin?.setLocationLayerEnabled(true)
-        locationLayerPlugin?.cameraMode = CameraMode.TRACKING
-        locationLayerPlugin?.renderMode = RenderMode.NORMAL
+        if (mapView == null) { Log.d(tag,"mapView is null") }
+        else {
+            if (map == null) { Log.d(tag,"map is null") }
+            else {
 
+
+            locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
+            locationLayerPlugin.apply{
+                setLocationLayerEnabled(true)
+                cameraMode = CameraMode.TRACKING
+                renderMode = RenderMode.NORMAL
+            }}
+        }
     }
 
+    private fun setCameraPosition(location: Location) {
+        map?.animateCamera(CameraUpdateFactory.newLatLng(
+                LatLng(location.latitude, location.longitude)))
+    }
     /// Permissions listener:
 
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
         //Present a toast or a dialog explainging why they should provide access
+        Log.d(tag,"Permissions: $permissionsToExplain")
+
     }
 
     override fun onPermissionResult(granted: Boolean) {
+        Log.d(tag,"[onPermissionResult] granted == $granted")
+
         if (granted) {
             enableLocation()
+        } else {
+            // Open dialogue for the user go do sudoku or something
         }
     }
 
@@ -121,62 +229,65 @@ class MapsActivity : AppCompatActivity(),
     // Locations listener:
 
     override fun onLocationChanged(location: Location?) {
-        location?.let {
+        if (location == null) {
+            Log.d(tag,"[onLocationChanged] location is null")
+        } else {
             originLocation = location
-            setCameraPosition(location)
+            setCameraPosition(originLocation)
         }
     }
 
     @SuppressWarnings("MissingPermission")
     override fun onConnected() {
-        locationEngine?.removeLocationUpdates()
+        Log.d(tag,"[onConnected] requesting location updates")
+        locationEngine.requestLocationUpdates()
     }
 
     //Lifecycle ting:
     @SuppressWarnings("MissingPermission")
     override fun onStart() {
         super.onStart()
-        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+        /*if (PermissionsManager.areLocationPermissionsGranted(this)) {
             locationEngine?.requestLocationUpdates()
-            locationLayerPlugin?.onStart()
-        }
-        mapView.onStart()
+            locationLayerPlugin.onStart()
+        }*/
+        mapView?.onStart()
     }
 
     override fun onResume() {
         super.onResume()
-        mapView.onResume()
+        mapView?.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        mapView.onPause()
+        mapView?.onPause()
     }
 
     override fun onStop() {
         super.onStop()
-        locationEngine?.removeLocationUpdates()
-        locationLayerPlugin?.onStop()
-        mapView.onStop()
+        locationEngine.removeLocationUpdates()
+        locationLayerPlugin.onStop()
+        mapView?.onStop()
     }
 
 
     override fun onDestroy() {
         super.onDestroy()
-        mapView.onDestroy()
-        locationEngine?.deactivate()
+        mapView?.onDestroy()
+        locationEngine.deactivate()
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
         if (outState != null) {
-            mapView.onSaveInstanceState(outState)
+            mapView?.onSaveInstanceState(outState)
         }
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-        mapView.onLowMemory()
+        mapView?.onLowMemory()
     }
 
 }
