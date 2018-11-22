@@ -1,17 +1,23 @@
 package uk.ac.ed.inf.coinz
 
+import android.content.Intent
 import android.location.Location
 import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+//import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
+import com.mapbox.geojson.FeatureCollection
+import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
@@ -42,37 +48,71 @@ class MapsActivity : AppCompatActivity(),
     private lateinit var permissionManager: PermissionsManager
     private lateinit var originLocation: Location
 
-    private lateinit var locationEngine : LocationEngine
+    private var locationEngine : LocationEngine? = null
 
-    private lateinit var locationLayerPlugin: LocationLayerPlugin
+    private var locationLayerPlugin: LocationLayerPlugin? = null
+
+    private lateinit var mAuth : FirebaseAuth
+
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         // setSupportActionBar(toolbar)
+
+        mAuth = FirebaseAuth.getInstance()
+
+
+
+
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
 
-        mapView = findViewById(R.id.mapView)
-        mapView?.onCreate(savedInstanceState)
-        mapView?.getMapAsync (this)
+            mapView = findViewById(R.id.mapView)
+            mapView?.onCreate(savedInstanceState)
+            mapView?.getMapAsync(this)
+        if (mAuth.currentUser == null) {
+            goToLogin()
+        }
     }
+
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
 
         //downloading
 
-        var date = SimpleDateFormat("yyyy/MM/dd").format(Date())
-        var mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
+        val date = SimpleDateFormat("yyyy/MM/dd").format(Date())
+        val mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
 
         var coins : String = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
 
+        var coinFeatures : FeatureCollection = FeatureCollection.fromJson(coins)
 
+        //mapping
 
         map = mapboxMap
 
+        for (i in coinFeatures.features()!!) {
 
-        //location
+            val g = i.geometry() as Point
+            val p = g.coordinates()
+            val tit = i.getStringProperty("id")
+
+            map?.addMarker( MarkerOptions()
+                    .position( LatLng(p[1], p[0]))
+                    .title(tit))
+        }
+
+
+
+        //map?.getUiSettings()?.setRotateGesturesEnabled(false)
+        //map?.getUiSettings()?.setLogoGravity(Gravity.BOTTOM | Gravity.END);
+        //map?.getUiSettings()?.setLogoEnabled(true);
+        map?.getUiSettings()?.setAttributionEnabled(false)
+        map?.getUiSettings()?.setZoomControlsEnabled(true)
+
+        //locating
 
         enableLocation()
     }
@@ -167,19 +207,19 @@ class MapsActivity : AppCompatActivity(),
     private fun initialiseLocationEngine() {
 
         locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()
-        locationEngine.apply {
+        locationEngine?.apply {
 
             interval = 5000
             fastestInterval = 1000
             priority = LocationEnginePriority.HIGH_ACCURACY
             activate()
         }
-        val lastLocation : Location? = locationEngine.lastLocation
+        val lastLocation : Location? = locationEngine?.lastLocation
         if (lastLocation != null) {
             originLocation = lastLocation
             setCameraPosition(lastLocation)
         } else {
-            locationEngine.addLocationEngineListener(this)
+            locationEngine?.addLocationEngineListener(this)
         }
     }
 
@@ -192,7 +232,7 @@ class MapsActivity : AppCompatActivity(),
 
 
             locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
-            locationLayerPlugin.apply{
+            locationLayerPlugin?.apply{
                 setLocationLayerEnabled(true)
                 cameraMode = CameraMode.TRACKING
                 renderMode = RenderMode.NORMAL
@@ -240,18 +280,31 @@ class MapsActivity : AppCompatActivity(),
     @SuppressWarnings("MissingPermission")
     override fun onConnected() {
         Log.d(tag,"[onConnected] requesting location updates")
-        locationEngine.requestLocationUpdates()
+        locationEngine?.requestLocationUpdates()
     }
 
-    //Lifecycle ting:
+
+    fun goToLogin() {
+        val intent : Intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+    }
+
+    //Lifecycle ting:----------------------------------------
+
+
     @SuppressWarnings("MissingPermission")
     override fun onStart() {
         super.onStart()
-        /*if (PermissionsManager.areLocationPermissionsGranted(this)) {
-            locationEngine?.requestLocationUpdates()
-            locationLayerPlugin.onStart()
+       // if (mAuth.currentUser == null) {
+         //   goToLogin()
+        //} else {
+            /*if (PermissionsManager.areLocationPermissionsGranted(this)) {
+            locationEngine!!.requestLocationUpdates()
+            locationLayerPlugin!!.onStart()
         }*/
-        mapView?.onStart()
+            mapView?.onStart()
+
+        //}
     }
 
     override fun onResume() {
@@ -266,8 +319,8 @@ class MapsActivity : AppCompatActivity(),
 
     override fun onStop() {
         super.onStop()
-        locationEngine.removeLocationUpdates()
-        locationLayerPlugin.onStop()
+        locationEngine?.removeLocationUpdates()
+        locationLayerPlugin?.onStop()
         mapView?.onStop()
     }
 
@@ -275,7 +328,7 @@ class MapsActivity : AppCompatActivity(),
     override fun onDestroy() {
         super.onDestroy()
         mapView?.onDestroy()
-        locationEngine.deactivate()
+        locationEngine?.deactivate()
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
