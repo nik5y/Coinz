@@ -2,9 +2,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="uk.ac.ed.inf.coinz.MainActivity">
+
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:id="@+id/shop_menu"
+        android:orderInCategory="1"
+        android:title="Shop"
+        app:showAsAction="never"  />
+
+    <item
+        android:id="@+id/settings_menu"
+        android:orderInCategory="2"
+        android:title="Settings"
+        app:showAsAction="never"  />
+
+    <item
+        android:id="@+id/sign_out_menu"
+        android:title="Sign Out"
+        android:orderInCategory="3"
         app:showAsAction="never" />
+
+
 </menu>

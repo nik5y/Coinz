@@ -81,6 +81,9 @@ class SignupActivity : AppCompatActivity() {
             alert.setMessage("Passwords do not match.")
             alert.show()
             Log.d(tag, "Passwords do not match.")
+            registerPassword.setText("")
+            registerPassword.setSelection(0)
+            registerConfirmPassword.setText("")
         }
 
     }

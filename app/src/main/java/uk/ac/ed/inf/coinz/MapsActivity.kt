@@ -1,12 +1,17 @@
 package uk.ac.ed.inf.coinz
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 //import com.google.firebase.FirebaseApp
+
 import com.google.firebase.auth.FirebaseAuth
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
@@ -52,20 +57,12 @@ class MapsActivity : AppCompatActivity(),
 
     private var locationLayerPlugin: LocationLayerPlugin? = null
 
-    private lateinit var mAuth : FirebaseAuth
-
-
-
+    private var mAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         // setSupportActionBar(toolbar)
-
-        mAuth = FirebaseAuth.getInstance()
-
-
-
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
 
@@ -80,7 +77,7 @@ class MapsActivity : AppCompatActivity(),
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
 
-        //downloading
+        //DOWNLOADING
 
         val date = SimpleDateFormat("yyyy/MM/dd").format(Date())
         val mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
@@ -98,13 +95,13 @@ class MapsActivity : AppCompatActivity(),
             val g = i.geometry() as Point
             val p = g.coordinates()
             val tit = i.getStringProperty("id")
-
+            val k = i.properties()?.get("currency")
             map?.addMarker( MarkerOptions()
                     .position( LatLng(p[1], p[0]))
                     .title(tit))
+                    //.icon(R.drawable.generic_coin)
+
         }
-
-
 
         //map?.getUiSettings()?.setRotateGesturesEnabled(false)
         //map?.getUiSettings()?.setLogoGravity(Gravity.BOTTOM | Gravity.END);
@@ -116,8 +113,6 @@ class MapsActivity : AppCompatActivity(),
 
         enableLocation()
     }
-
-
 
     //DOWNLOADER
 
@@ -173,24 +168,6 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     fun enableLocation() {
         if(PermissionsManager.areLocationPermissionsGranted(this)) {
             Log.d(tag, "Permissions are granted")
@@ -229,8 +206,6 @@ class MapsActivity : AppCompatActivity(),
         else {
             if (map == null) { Log.d(tag,"map is null") }
             else {
-
-
             locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
             locationLayerPlugin?.apply{
                 setLocationLayerEnabled(true)
@@ -285,7 +260,7 @@ class MapsActivity : AppCompatActivity(),
 
 
     fun goToLogin() {
-        val intent : Intent = Intent(this, MainActivity::class.java)
+        val intent : Intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
     }
 
@@ -343,4 +318,25 @@ class MapsActivity : AppCompatActivity(),
         mapView?.onLowMemory()
     }
 
+    //MENU
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?) : Boolean  {
+        when (item?.itemId) {
+            R.id.sign_out_menu -> {
+                mAuth.signOut()
+                goToLogin()
+                return true}
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
 }
+
+
+// http://m.yandex.kz/collections/card/5b6eb2f9a947cc00c1981068/ coin source//
