@@ -13,90 +13,83 @@ class SignupActivity : AppCompatActivity() {
 
     private val tag = "SignupActivity"
 
-    private lateinit var mAuth : FirebaseAuth
+    private var mAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
 
-        //Collect input:--------------------------
-
+        //Register:
         registerButton.setOnClickListener {
-            val username : String = registerUsername.text.toString()
-            val email : String = registerEmail.text.toString()
-            val password : String = registerPassword.text.toString()
-            val passwordConfirm : String = registerConfirmPassword.text.toString()
-
-            Log.d(tag, "Email is $email"  )
-            Log.d(tag, "Password is $password"  )
-            Log.d(tag, "Password Confirm is $passwordConfirm"  )
-
-            //Firebase Auth tings:------------------------
-
-            var alert = AlertDialog.Builder(this)
-            alert.apply {
-                setTitle("Error...")
-                setPositiveButton("OK", null)
-                setCancelable(true)
-                create()
-            }
-
-            if (email.isEmpty()&&password.isEmpty()) {
-                alert.setMessage("Please enter email and password")
-                alert.show()
-                return@setOnClickListener
-
-            } else if (password.isEmpty()) {
-
-                alert.setMessage("Please enter password")
-                alert.show()
-                return@setOnClickListener
-
-            } else if (password.isEmpty()) {
-
-                alert.setMessage("passwords do not match")
-                alert.show()
-                return@setOnClickListener
-
-            } else if (username.isEmpty()) {
-
-                alert.setMessage("Please enter password")
-                alert.show()
-
-            }else if (password == passwordConfirm) {
-
-                FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password).addOnCompleteListener {
-                    if (!it.isSuccessful) return@addOnCompleteListener
-
-                    Log.d(tag, "Created user  ${it.result?.user?.uid}")
-                }
-            } else {
-                val alert = AlertDialog.Builder(this)
-
-                alert.setMessage("passwords do not match")
-                alert.show()
-
-                registerPassword.setText("")
-                registerConfirmPassword.setText("")
-            }
-
+            doRegistration()
         }
 
-        //Login instead:---------------------------
+        //Login instead:
         registerAlreadyRegistered.setOnClickListener{
             goToLogin()
         }
 
-
-
     }
 
-    fun goToLogin() {
+    //Go to Login Activity:
+
+    private fun goToLogin() {
         val intent : Intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
     }
 
+    //Register:
 
+    private fun doRegistration() {
+
+        val username : String = registerUsername.text.toString()
+        val email : String = registerEmail.text.toString()
+        val password : String = registerPassword.text.toString()
+        val passwordConfirm : String = registerConfirmPassword.text.toString()
+
+        //Firebase Auth tings:------------------------
+
+        var alert = AlertDialog.Builder(this)
+        alert.apply {
+            //setTitle("Error:")
+            setPositiveButton("OK", null)
+            setCancelable(true)
+            create()
+        }
+
+        if ( email.isEmpty() || password.isEmpty() || username.isEmpty() || passwordConfirm.isEmpty()) {
+            alert.setMessage("Please fill out all of the forms.")
+            alert.show()
+            Log.d(tag, "Forms left empty.")
+            return
+        }
+
+        if (password == passwordConfirm) {
+
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener {
+                        if (!it.isSuccessful) return@addOnCompleteListener
+                        Log.d(tag, "Created user  ${it.result?.user?.uid}")
+                        mAuth.signInWithEmailAndPassword(email,password)
+                        goToMaps()
+                    }.addOnFailureListener {
+                        alert.setMessage("${it.message}")
+                        alert.show()
+                        Log.d(tag, "Register failed! ${it.message}")
+                    }
+        } else {
+            alert.setMessage("Passwords do not match.")
+            alert.show()
+            Log.d(tag, "Passwords do not match.")
+        }
+
+    }
+
+    //Go to Maps:
+
+    private fun goToMaps() {
+        startActivity(Intent(this, MapsActivity::class.java))
+    }
 
 
 

@@ -11,23 +11,38 @@ class LoginActivity : AppCompatActivity() {
 
     private val tag = "LoginActivity"
 
-    private lateinit var mAuth : FirebaseAuth
+    private var mAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login2)
 
-        mAuth = FirebaseAuth.getInstance()
-
         loginNotRegistered.setOnClickListener {
             goToSignup()
         }
 
+        loginButton.setOnClickListener {
+            doLogin()
+        }
+
     }
 
-    fun goToSignup() {
+    //Go to SignUp
+
+    private fun LoginActivity.goToSignup() {
         val intent : Intent = Intent(this, SignupActivity::class.java)
         startActivity(intent)
+    }
+
+    //Login
+
+    private fun doLogin() {
+
+        val email = loginEmail.text.toString()
+        val password = loginPassword.text.toString()
+
+        mAuth.signInWithEmailAndPassword(email,password)
+        //add failure and all that.
     }
 
 
