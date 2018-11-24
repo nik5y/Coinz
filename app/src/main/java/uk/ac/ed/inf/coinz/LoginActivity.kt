@@ -8,6 +8,7 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_login2.*
 //
+//
 class LoginActivity : AppCompatActivity() {
 
     private val tag = "LoginActivity"
