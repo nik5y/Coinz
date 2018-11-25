@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package uk.ac.ed.inf.coinz
 
 import android.content.Intent
@@ -22,7 +24,9 @@ import com.mapbox.android.core.permissions.PermissionsManager
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.annotations.IconFactory
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
+import com.mapbox.mapboxsdk.annotations.MarkerViewOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
@@ -42,7 +46,6 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 class MapsActivity : AppCompatActivity(),
         PermissionsListener, LocationEngineListener, OnMapReadyCallback {
 
@@ -58,6 +61,7 @@ class MapsActivity : AppCompatActivity(),
     private var locationLayerPlugin: LocationLayerPlugin? = null
 
     private var mAuth = FirebaseAuth.getInstance()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,13 +98,14 @@ class MapsActivity : AppCompatActivity(),
 
             val g = i.geometry() as Point
             val p = g.coordinates()
-            val tit = i.getStringProperty("id")
-            val k = i.properties()?.get("currency")
+            // val tit = i.getStringProperty("id")
+            val currency = i.getStringProperty("currency")
+            val iconId = resources.getIdentifier(currency.toLowerCase(),"drawable",packageName)
+
             map?.addMarker( MarkerOptions()
                     .position( LatLng(p[1], p[0]))
-                    .title(tit))
-                    //.icon(R.drawable.generic_coin)
-
+                    .title(currency)
+                    .icon(IconFactory.getInstance(this).fromResource(iconId)))
         }
 
         //map?.getUiSettings()?.setRotateGesturesEnabled(false)
@@ -143,7 +148,7 @@ class MapsActivity : AppCompatActivity(),
 
             return result
         }
-
+        //SOXRANILOSJ?
         //given a string representation of a url, sets up a connection
         //and gets an input stream
         @Throws(IOException::class)
