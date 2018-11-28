@@ -136,7 +136,7 @@ class MapsActivity : AppCompatActivity(),
 
             return result
         }
-        //SOXRANILOSJ?
+
         //given a string representation of a url, sets up a connection
         //and gets an input stream
         @Throws(IOException::class)
@@ -404,7 +404,7 @@ class MapsActivity : AppCompatActivity(),
                 val coinId = i.getStringProperty("id")
                 val coinValue = i.getStringProperty("value")
 
-                val iconId = resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
+                var iconId = resources.getIdentifier(coinCurrency.toLowerCase()+coinValue[0], "drawable", packageName)
 
                 if (coinsToRemove == null || !(coinsToRemove!!.contains(coinId))) {
 
