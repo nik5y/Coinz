@@ -2,19 +2,19 @@
 
 package uk.ac.ed.inf.coinz
 
+import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
-//import com.google.firebase.FirebaseApp
-
+import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
@@ -25,8 +25,8 @@ import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.annotations.IconFactory
+import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
-import com.mapbox.mapboxsdk.annotations.MarkerViewOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
@@ -35,16 +35,14 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
-import kotlinx.android.synthetic.main.activity_main.*
-import uk.ac.ed.inf.coinz.MapsActivity.DownloadCompleteRunner.result
-import uk.ac.ed.inf.coinz.R.id.toolbar
+import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 class MapsActivity : AppCompatActivity(),
         PermissionsListener, LocationEngineListener, OnMapReadyCallback {
@@ -62,20 +60,23 @@ class MapsActivity : AppCompatActivity(),
 
     private var mAuth = FirebaseAuth.getInstance()
 
+    private var userEmail : String? = null
+
+    private val firestore = FirebaseFirestore.getInstance()
+
+    private var coinsToRemove : MutableSet<String>? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-        // setSupportActionBar(toolbar)
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
 
             mapView = findViewById(R.id.mapView)
             mapView?.onCreate(savedInstanceState)
             mapView?.getMapAsync(this)
-        if (mAuth.currentUser == null) {
-            goToLogin()
-        }
+
     }
 
 
@@ -85,38 +86,25 @@ class MapsActivity : AppCompatActivity(),
 
         val date = SimpleDateFormat("yyyy/MM/dd").format(Date())
         val mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
+        val coins : String = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
+        val coinFeatures : FeatureCollection = FeatureCollection.fromJson(coins)
 
-        var coins : String = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
+        val rates : JSONObject = JSONObject(coins).get("rates") as JSONObject
 
-        var coinFeatures : FeatureCollection = FeatureCollection.fromJson(coins)
-
-        //mapping
 
         map = mapboxMap
 
-        for (i in coinFeatures.features()!!) {
-
-            val g = i.geometry() as Point
-            val p = g.coordinates()
-            // val tit = i.getStringProperty("id")
-            val currency = i.getStringProperty("currency")
-            val iconId = resources.getIdentifier(currency.toLowerCase(),"drawable",packageName)
-
-            map?.addMarker( MarkerOptions()
-                    .position( LatLng(p[1], p[0]))
-                    .title(currency)
-                    .icon(IconFactory.getInstance(this).fromResource(iconId)))
-        }
-
-        //map?.getUiSettings()?.setRotateGesturesEnabled(false)
-        //map?.getUiSettings()?.setLogoGravity(Gravity.BOTTOM | Gravity.END);
-        //map?.getUiSettings()?.setLogoEnabled(true);
-        map?.getUiSettings()?.setAttributionEnabled(false)
-        map?.getUiSettings()?.setZoomControlsEnabled(true)
+        addCoinsToMap(userEmail!!, map, coinFeatures )
 
         //locating
 
         enableLocation()
+
+        map?.setOnMarkerClickListener {
+            coinCollect(it)
+            true
+        }
+
     }
 
     //DOWNLOADER
@@ -253,7 +241,7 @@ class MapsActivity : AppCompatActivity(),
             Log.d(tag,"[onLocationChanged] location is null")
         } else {
             originLocation = location
-            setCameraPosition(originLocation)
+            setCameraPosition(location)
         }
     }
 
@@ -265,7 +253,8 @@ class MapsActivity : AppCompatActivity(),
 
 
     fun goToLogin() {
-        val intent : Intent = Intent(this, LoginActivity::class.java)
+        val intent: Intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
 
@@ -275,6 +264,11 @@ class MapsActivity : AppCompatActivity(),
     @SuppressWarnings("MissingPermission")
     override fun onStart() {
         super.onStart()
+
+        if (locationEngine != null) {
+            locationEngine!!.requestLocationUpdates()
+            locationLayerPlugin!!.onStart()
+        }
        // if (mAuth.currentUser == null) {
          //   goToLogin()
         //} else {
@@ -282,7 +276,13 @@ class MapsActivity : AppCompatActivity(),
             locationEngine!!.requestLocationUpdates()
             locationLayerPlugin!!.onStart()
         }*/
-            mapView?.onStart()
+        mapView?.onStart()
+
+        if (mAuth.currentUser == null) {
+            goToLogin()
+        }
+
+        userEmail = mAuth.currentUser?.email
 
         //}
     }
@@ -341,7 +341,92 @@ class MapsActivity : AppCompatActivity(),
         return super.onOptionsItemSelected(item)
     }
 
+    @SuppressLint("MissingPermission")
+    private fun coinCollect(marker : Marker) {
+
+        val lastLocation = locationEngine!!.lastLocation
+
+        val markerPos = marker.position
+        val currentPos = LatLng(lastLocation.latitude, lastLocation.longitude)
+
+        if(markerPos.distanceTo(currentPos) <= 250.0) {
+
+            marker.remove()
+
+            val coinMap = createCoinMap(marker)
+
+            addCoinToDatabase(userEmail!!, coinMap)
+
+        } else {
+            Toast.makeText(this@MapsActivity, "Too far", Toast.LENGTH_SHORT).show()
+        }
+
+    }
+
+    private fun addCoinToDatabase(email : String, coin : MutableMap<String,Any>) {
+
+        val coinReference = firestore.collection(email).document("Collected Coins")
+
+            coinReference.set(coin, SetOptions.merge()).addOnCompleteListener {
+                Log.d(tag, "Coin added to the Database")
+            }.addOnFailureListener {
+                Log.d(tag, "Coin NOT added to the Database!")
+            }
+
+    }
+
+    private fun createCoinMap(marker: Marker) : MutableMap<String,Any> {
+        val featuresCoin = marker.title.toString().split(" ")
+
+        var currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
+        currValMap.put("currency",featuresCoin[1])
+        currValMap.put("value",featuresCoin[2])
+
+        val coinMap : MutableMap<String,Any> = mutableMapOf()
+        coinMap.put(featuresCoin[0], currValMap)
+
+        return coinMap
+    }
+
+    private fun addCoinsToMap(email : String, map: MapboxMap?, coinFeatures: FeatureCollection) {
+
+        firestore.collection(email).document("Collected Coins").get().addOnSuccessListener {
+
+            val hash = it?.data
+            coinsToRemove = hash?.keys
+
+            for (i in coinFeatures.features()!!) {
+
+                val geometry = i.geometry() as Point
+                val point = geometry.coordinates()
+                // val tit = i.getStringProperty("id")
+                val coinCurrency = i.getStringProperty("currency")
+                val coinId = i.getStringProperty("id")
+                val coinValue = i.getStringProperty("value")
+
+                val iconId = resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
+
+                if (coinsToRemove == null || !(coinsToRemove!!.contains(coinId))) {
+
+                    map?.addMarker(MarkerOptions()
+                            .position(LatLng(point[1], point[0]))
+                            .title(coinId + " " + coinCurrency + " " + coinValue)
+                            .icon(IconFactory.getInstance(this).fromResource(iconId)))
+                }
+            }
+
+            //map?.getUiSettings()?.setRotateGesturesEnabled(false)
+            //map?.getUiSettings()?.setLogoGravity(Gravity.BOTTOM | Gravity.END);
+            //map?.getUiSettings()?.setLogoEnabled(true);
+            map?.getUiSettings()?.setAttributionEnabled(false)
+            map?.getUiSettings()?.setZoomControlsEnabled(true)
+        }
+
+    }
+
+
 }
+
 
 
 // http://m.yandex.kz/collections/card/5b6eb2f9a947cc00c1981068/ coin source//

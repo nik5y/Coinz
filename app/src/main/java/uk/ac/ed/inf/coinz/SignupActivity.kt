@@ -10,12 +10,14 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v7.app.AlertDialog
 import android.util.Log
+import android.view.View
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_signup.*
+
 import java.net.URI
 import java.util.*
 
@@ -63,21 +65,24 @@ class SignupActivity : AppCompatActivity() {
 
             val image_bmp = MediaStore.Images.Media.getBitmap(contentResolver, profilePicture)
 
-            registerPicture.setBackgroundDrawable(BitmapDrawable(image_bmp))
+            //registerPicture.setBackgroundDrawable(BitmapDrawable(image_bmp))
 
+            registerCircleView.setImageBitmap(image_bmp)
+
+            registerPicture.alpha = 0f
+           // registerPicture.visibility= View.GONE
         }
 
     }
 
     //Go to Login Activity:
-
     private fun goToLogin() {
         val intent: Intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
 
     //Register:
-
     private fun doRegistration() {
 
         val username: String = registerUsername.text.toString()
@@ -109,8 +114,7 @@ class SignupActivity : AppCompatActivity() {
                         if (!it.isSuccessful) return@addOnCompleteListener
                         Log.d(tag, "Created user with ID ${it.result?.user?.uid}")
                         mAuth.signInWithEmailAndPassword(email, password)
-                        uploadProfilePicture()
-                        addUserToDatabase(username, email)
+                        uploadAllInformation(username,email)
                         goToMaps()
                     }.addOnFailureListener {
                         alert.setMessage("${it.message}")
@@ -129,57 +133,54 @@ class SignupActivity : AppCompatActivity() {
     }
 
     //Go to Maps:
-
     private fun goToMaps() {
-        startActivity(Intent(this, MapsActivity::class.java))
+        var intent = Intent(this, MapsActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
     }
 
-    //Upload Picture to Firebase:
-
-    private fun uploadProfilePicture() {
+    //Upload Picture to Storage and User Info to Database:
+    private fun uploadAllInformation(username: String,email: String) {
 
         if (profilePicture == null) return
         //Use the profile pic identification as the users uid, as a user can only have one profile pic at a time:
         val name = mAuth.currentUser?.uid
         val reference = FirebaseStorage.getInstance().getReference("/Pictures/$name")
         reference.putFile(profilePicture!!).addOnSuccessListener {
+
             Log.d(tag, "Profile picture uploaded successfully.")
+            reference.downloadUrl.addOnSuccessListener {
+                addUserToDatabase(username,email,it.toString())
+            }
         }
 
     }
 
-    //Add user to Firebase:
 
-    private fun addUserToDatabase(username: String, email: String) {
-        //  reference.setValue()
 
-        val name = mAuth.currentUser?.uid
-        val reference = FirebaseStorage.getInstance().getReference("/Pictures/$name")
+    //Add user to Database:
+    private fun addUserToDatabase(username: String, email: String, url : String) {
 
-        val userReference = firestore.collection(username).document("Personal Information")
+        val userReference = firestore.collection(email).document("Personal Information")
         if(profilePicture==null) {
-            userReference.set(User(email)).addOnCompleteListener {
-                if (!it.isSuccessful) {
-                    Log.d(tag, "User NOT added to the Database!")
-                } else {
-                    Log.d(tag, "User Succesfully added to the Database. No Uploaded Picture.")
-                }
+            userReference.set(User(username)).addOnCompleteListener {
+                Log.d(tag, "User Succesfully added to the Database. No Uploaded Picture.")
+            }.addOnFailureListener {
+                Log.d(tag, "User NOT added to the Database!")
             }
         } else {
-            userReference.set(User(email,reference.downloadUrl.toString())).addOnCompleteListener {
-                if (!it.isSuccessful) {
-                    Log.d(tag, "User NOT added to the Database!")
-                } else {
-                    Log.d(tag, "User Succesfully added to the Database")
+
+            userReference.set(User(username, url)).addOnSuccessListener{
+                Log.d(tag, "User Succesfully added to the Database")
+                }.addOnFailureListener {
+                Log.d(tag, "User NOT added to the Database!")
                 }
             }
-        }
     }
 
 
 }
 
-
-class User(var email:String, var pictureURL:String="Not Uploaded")
+class User(var username:String, var pictureURL:String="Not Uploaded")
 
 

@@ -20,6 +20,15 @@
         app:layout_constraintStart_toStartOf="@+id/registerPassword"
         app:layout_constraintTop_toBottomOf="@+id/registerConfirmPassword" />
 
+    <de.hdodenhof.circleimageview.CircleImageView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/registerCircleView"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        app:layout_constraintBottom_toBottomOf="@+id/registerPicture"
+        app:layout_constraintEnd_toEndOf="@+id/registerPicture"
+        app:layout_constraintStart_toStartOf="@+id/registerPicture"
+        app:layout_constraintTop_toTopOf="@+id/registerPicture" />
+
     <EditText
         android:id="@+id/registerUsername"
         android:layout_width="0dp"
@@ -99,7 +108,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/photo_circle"
-        android:text="Button"
+        android:text="Load Picture"
         android:textColor="@color/mapboxWhite"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/registerUsername"
