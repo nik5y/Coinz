@@ -30,14 +30,12 @@ class LoginActivity : AppCompatActivity() {
     }
 
     //Go to SignUp
-
     private fun LoginActivity.goToSignup() {
         val intent : Intent = Intent(this, SignupActivity::class.java)
         startActivity(intent)
     }
 
     //Login
-
     private fun doLogin() {
 
         val email = loginEmail.text.toString()

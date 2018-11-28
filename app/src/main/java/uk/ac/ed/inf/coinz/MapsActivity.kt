@@ -66,6 +66,14 @@ class MapsActivity : AppCompatActivity(),
 
     private var coinsToRemove : MutableSet<String>? = null
 
+    private var currencyMarkerBonus : Boolean = false
+    private var valueMarkerBonus : Boolean = true
+    private var coinCollectRangeBonus : Boolean = false
+
+    private var coinCollectRange : Double = 25.0
+
+    private var iconId : Int = 0
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,10 +109,9 @@ class MapsActivity : AppCompatActivity(),
         enableLocation()
 
         map?.setOnMarkerClickListener {
-            coinCollect(it)
+            coinCollect(it, coinCollectRangeBonus)
             true
         }
-
     }
 
     //DOWNLOADER
@@ -156,9 +163,7 @@ class MapsActivity : AppCompatActivity(),
         override fun onPostExecute(result: String) {
             super.onPostExecute(result)
             caller.downloadComplete(result)
-
         }
-
     }
 
     fun enableLocation() {
@@ -213,7 +218,6 @@ class MapsActivity : AppCompatActivity(),
                 LatLng(location.latitude, location.longitude)))
     }
     /// Permissions listener:
-
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
         //Present a toast or a dialog explainging why they should provide access
         Log.d(tag,"Permissions: $permissionsToExplain")
@@ -235,7 +239,6 @@ class MapsActivity : AppCompatActivity(),
     }
 
     // Locations listener:
-
     override fun onLocationChanged(location: Location?) {
         if (location == null) {
             Log.d(tag,"[onLocationChanged] location is null")
@@ -269,13 +272,7 @@ class MapsActivity : AppCompatActivity(),
             locationEngine!!.requestLocationUpdates()
             locationLayerPlugin!!.onStart()
         }
-       // if (mAuth.currentUser == null) {
-         //   goToLogin()
-        //} else {
-            /*if (PermissionsManager.areLocationPermissionsGranted(this)) {
-            locationEngine!!.requestLocationUpdates()
-            locationLayerPlugin!!.onStart()
-        }*/
+
         mapView?.onStart()
 
         if (mAuth.currentUser == null) {
@@ -283,8 +280,6 @@ class MapsActivity : AppCompatActivity(),
         }
 
         userEmail = mAuth.currentUser?.email
-
-        //}
     }
 
     override fun onResume() {
@@ -342,14 +337,18 @@ class MapsActivity : AppCompatActivity(),
     }
 
     @SuppressLint("MissingPermission")
-    private fun coinCollect(marker : Marker) {
+    private fun coinCollect(marker : Marker, coinCollectRangeBonus : Boolean) {
 
         val lastLocation = locationEngine!!.lastLocation
 
         val markerPos = marker.position
         val currentPos = LatLng(lastLocation.latitude, lastLocation.longitude)
 
-        if(markerPos.distanceTo(currentPos) <= 250.0) {
+        if(coinCollectRangeBonus) {
+            coinCollectRange = 50.0
+        }
+
+        if(markerPos.distanceTo(currentPos) <= coinCollectRange) {
 
             marker.remove()
 
@@ -358,9 +357,9 @@ class MapsActivity : AppCompatActivity(),
             addCoinToDatabase(userEmail!!, coinMap)
 
         } else {
-            Toast.makeText(this@MapsActivity, "Too far", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).
+                    format(0)}m out of Range!", Toast.LENGTH_LONG).show()
         }
-
     }
 
     private fun addCoinToDatabase(email : String, coin : MutableMap<String,Any>) {
@@ -404,7 +403,20 @@ class MapsActivity : AppCompatActivity(),
                 val coinId = i.getStringProperty("id")
                 val coinValue = i.getStringProperty("value")
 
-                var iconId = resources.getIdentifier(coinCurrency.toLowerCase()+coinValue[0], "drawable", packageName)
+                if (currencyMarkerBonus) {
+                    if(valueMarkerBonus) {
+                        iconId  =  resources.getIdentifier(coinCurrency.toLowerCase()+coinValue[0], "drawable", packageName)
+                    } else {
+                        iconId  =  resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
+                    }
+                } else {
+                    if (valueMarkerBonus) {
+                        iconId  =  resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
+                    } else {
+                        iconId  =  resources.getIdentifier("generic_coin", "drawable", packageName)
+                    }
+                }
+
 
                 if (coinsToRemove == null || !(coinsToRemove!!.contains(coinId))) {
 
@@ -424,7 +436,7 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
-
+    fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
 }
 
 
