@@ -12,9 +12,10 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
+import com.google.android.gms.common.api.Api
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.*
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
@@ -41,7 +42,14 @@ import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
+import java.time.Duration
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 
 class MapsActivity : AppCompatActivity(),
@@ -280,6 +288,9 @@ class MapsActivity : AppCompatActivity(),
         }
 
         userEmail = mAuth.currentUser?.email
+
+        scheduleInit()
+
     }
 
     override fun onResume() {
@@ -439,6 +450,58 @@ class MapsActivity : AppCompatActivity(),
     }
 
     fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
+
+    fun scheduleInit() {
+        //SCHEDULE
+
+        val scheduledExecutorService : ScheduledExecutorService = Executors.newScheduledThreadPool(1)
+        val now = OffsetDateTime.now(ZoneOffset.UTC)
+
+        val today = now.toLocalDate()
+        val tomorrow = today.plusDays(1)
+
+        val tomorrowStart = OffsetDateTime.of(
+                tomorrow,
+                LocalTime.MIN,
+                ZoneOffset.UTC
+        )
+
+        val d = Duration.between(now, tomorrowStart)
+        val millisUntilTomorrowStart = d.toMillis()
+
+        //scheduledExecutorService.schedule(dailyUpdate(), 0, TimeUnit.SECONDS)
+
+        //scheduledExecutorService.shutdown()
+
+        scheduledExecutorService.scheduleAtFixedRate(dailyUpdate(), millisUntilTomorrowStart ,  TimeUnit.DAYS.toMillis( 1 ) ,  TimeUnit.MILLISECONDS  )
+    }
+
+    /*fun deleteCollection(collection : CollectionReference, batchSize : Long) {
+        try {
+    // retrieve a small batch of documents to avoid out-of-memory errors
+        val future : Task<QuerySnapshot> = collection.limit(batchSize).get();
+        var deleted = 0;
+    // future.get() blocks on document retrieval
+        val documents : List<QueryDocumentSnapshot>  = ;
+    for (document in documents) {
+      document.getReference().delete();
+      ++deleted;
+    }
+    if (deleted >= batchSize) {
+      // retrieve and delete another batch
+      deleteCollection(collection, batchSize);
+    }
+  } catch (e : Exception) {
+    System.err.println("Error deleting collection : " + e.message);
+  }*/
+
+    fun delCheck() {
+
+
+
+    }
+
+
 }
 
 

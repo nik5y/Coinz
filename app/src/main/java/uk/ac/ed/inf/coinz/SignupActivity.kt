@@ -13,13 +13,22 @@ import android.util.Log
 import android.view.View
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_signup.*
 
 import java.net.URI
+import java.time.Duration
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 class SignupActivity : AppCompatActivity() {
 
@@ -70,7 +79,7 @@ class SignupActivity : AppCompatActivity() {
             registerCircleView.setImageBitmap(image_bmp)
 
             registerPicture.alpha = 0f
-           // registerPicture.visibility= View.GONE
+            // registerPicture.visibility= View.GONE
         }
 
     }
@@ -114,7 +123,7 @@ class SignupActivity : AppCompatActivity() {
                         if (!it.isSuccessful) return@addOnCompleteListener
                         Log.d(tag, "Created user with ID ${it.result?.user?.uid}")
                         mAuth.signInWithEmailAndPassword(email, password)
-                        uploadAllInformation(username,email)
+                        uploadAllInformation(username, email)
                         goToMaps()
                     }.addOnFailureListener {
                         alert.setMessage("${it.message}")
@@ -140,10 +149,10 @@ class SignupActivity : AppCompatActivity() {
     }
 
     //Upload Picture to Storage and User Info to Database:
-    private fun uploadAllInformation(username: String,email: String) {
+    private fun uploadAllInformation(username: String, email: String) {
 
         if (profilePicture == null) {
-            addUserToDatabase(username,email,"Not Uploaded")
+            addUserToDatabase(username, email, "Not Uploaded")
         } else {
             //Use the profile pic identification as the users uid, as a user can only have one profile pic at a time:
             val name = mAuth.currentUser?.uid
@@ -159,30 +168,52 @@ class SignupActivity : AppCompatActivity() {
     }
 
 
-
     //Add user to Database:
-    private fun addUserToDatabase(username: String, email: String, url : String) {
+    private fun addUserToDatabase(username: String, email: String, url: String) {
 
         val userReference = firestore.collection("Users").document(email).collection("Account Information").document("Personal Details")
-        if(profilePicture==null) {
-            userReference.set(User(username,url)).addOnCompleteListener {
-                Log.d(tag, "User Succesfully added to the Database. No Uploaded Picture.")
-            }.addOnFailureListener {
-                Log.d(tag, "User NOT added to the Database!")
-            }
-        } else {
+        val bonusRangeReference = firestore.collection("Users").document(email).collection("Bonuses").document("Range+")
 
-            userReference.set(User(username, url)).addOnSuccessListener{
-                Log.d(tag, "User Succesfully added to the Database")
-                }.addOnFailureListener {
-                Log.d(tag, "User NOT added to the Database!")
-                }
-            }
+        ///addd bonus features
+
+        userReference.set(User(username, url)).addOnCompleteListener {
+
+
+            Log.d(tag, "User Succesfully added to the Database")
+        }.addOnFailureListener {
+            Log.d(tag, "User NOT added to the Database!")
+        }
+
+
     }
-
 
 }
 
 class User(var username:String, var pictureURL:String)
 
+class dailyUpdate() : Runnable {
+    override fun run() {
+
+        //Remove coins from todaysbanked, todayssent; Set bonus features to false.
+
+        var currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
+        val coinMap : MutableMap<String,Any> = mutableMapOf()
+
+        currValMap.put("kek","check")
+        coinMap.put("boob", currValMap)
+
+        val firestore = FirebaseFirestore.getInstance()
+        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
+
+        //remove todaysbanked
+        firestore.collection("Users").document(email).collection("Coins").document("Collected Coins").delete()
+
+        //remove todayssent
+        firestore.collection("Users").document(email).collection("Coins").document("Sent Coins Today").delete()
+
+        //set bonus features to false
+        firestore.collection("Users").document(email).collection("Bonus").document("Currency Markers").update("Active", false)
+        firestore.collection("Users").document(email).collection("Bonus").document("Value Markers").update("Active", false)
+    }
+}
 

@@ -27,6 +27,8 @@ class LoginActivity : AppCompatActivity() {
             doLogin()
         }
 
+
+
     }
 
     //Go to SignUp
