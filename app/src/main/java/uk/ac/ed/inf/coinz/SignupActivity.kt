@@ -142,18 +142,20 @@ class SignupActivity : AppCompatActivity() {
     //Upload Picture to Storage and User Info to Database:
     private fun uploadAllInformation(username: String,email: String) {
 
-        if (profilePicture == null) return
-        //Use the profile pic identification as the users uid, as a user can only have one profile pic at a time:
-        val name = mAuth.currentUser?.uid
-        val reference = FirebaseStorage.getInstance().getReference("/Pictures/$name")
-        reference.putFile(profilePicture!!).addOnSuccessListener {
+        if (profilePicture == null) {
+            addUserToDatabase(username,email,"Not Uploaded")
+        } else {
+            //Use the profile pic identification as the users uid, as a user can only have one profile pic at a time:
+            val name = mAuth.currentUser?.uid
+            val reference = FirebaseStorage.getInstance().getReference("/Pictures/$name")
+            reference.putFile(profilePicture!!).addOnSuccessListener {
 
-            Log.d(tag, "Profile picture uploaded successfully.")
-            reference.downloadUrl.addOnSuccessListener {
-                addUserToDatabase(username,email,it.toString())
+                Log.d(tag, "Profile picture uploaded successfully.")
+                reference.downloadUrl.addOnSuccessListener {
+                    addUserToDatabase(username, email, it.toString())
+                }
             }
         }
-
     }
 
 
@@ -161,9 +163,9 @@ class SignupActivity : AppCompatActivity() {
     //Add user to Database:
     private fun addUserToDatabase(username: String, email: String, url : String) {
 
-        val userReference = firestore.collection(email).document("Personal Information")
+        val userReference = firestore.collection("Users").document(email).collection("Account Information").document("Personal Details")
         if(profilePicture==null) {
-            userReference.set(User(username)).addOnCompleteListener {
+            userReference.set(User(username,url)).addOnCompleteListener {
                 Log.d(tag, "User Succesfully added to the Database. No Uploaded Picture.")
             }.addOnFailureListener {
                 Log.d(tag, "User NOT added to the Database!")
@@ -181,6 +183,6 @@ class SignupActivity : AppCompatActivity() {
 
 }
 
-class User(var username:String, var pictureURL:String="Not Uploaded")
+class User(var username:String, var pictureURL:String)
 
 

@@ -66,11 +66,11 @@ class MapsActivity : AppCompatActivity(),
 
     private var coinsToRemove : MutableSet<String>? = null
 
-    private var currencyMarkerBonus : Boolean = false
+    private var currencyMarkerBonus : Boolean = true
     private var valueMarkerBonus : Boolean = true
     private var coinCollectRangeBonus : Boolean = false
 
-    private var coinCollectRange : Double = 25.0
+    private var coinCollectRange : Double = 0.0
 
     private var iconId : Int = 0
 
@@ -346,6 +346,8 @@ class MapsActivity : AppCompatActivity(),
 
         if(coinCollectRangeBonus) {
             coinCollectRange = 50.0
+        } else {
+            coinCollectRange = 250.0
         }
 
         if(markerPos.distanceTo(currentPos) <= coinCollectRange) {
@@ -364,7 +366,7 @@ class MapsActivity : AppCompatActivity(),
 
     private fun addCoinToDatabase(email : String, coin : MutableMap<String,Any>) {
 
-        val coinReference = firestore.collection(email).document("Collected Coins")
+        val coinReference = firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins")
 
             coinReference.set(coin, SetOptions.merge()).addOnCompleteListener {
                 Log.d(tag, "Coin added to the Database")
@@ -389,7 +391,7 @@ class MapsActivity : AppCompatActivity(),
 
     private fun addCoinsToMap(email : String, map: MapboxMap?, coinFeatures: FeatureCollection) {
 
-        firestore.collection(email).document("Collected Coins").get().addOnSuccessListener {
+        firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins").get().addOnSuccessListener {
 
             val hash = it?.data
             coinsToRemove = hash?.keys
