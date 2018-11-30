@@ -1,34 +1,18 @@
 package uk.ac.ed.inf.coinz
 
 import android.app.Activity
-import android.content.DialogInterface
 import android.content.Intent
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v7.app.AlertDialog
 import android.util.Log
-import android.view.View
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreSettings
-import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_signup.*
 
-import java.net.URI
-import java.time.Duration
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 class SignupActivity : AppCompatActivity() {
 
@@ -72,11 +56,11 @@ class SignupActivity : AppCompatActivity() {
 
             profilePicture = data.data
 
-            val image_bmp = MediaStore.Images.Media.getBitmap(contentResolver, profilePicture)
+            val imageBmp = MediaStore.Images.Media.getBitmap(contentResolver, profilePicture)
 
             //registerPicture.setBackgroundDrawable(BitmapDrawable(image_bmp))
 
-            registerCircleView.setImageBitmap(image_bmp)
+            registerCircleView.setImageBitmap(imageBmp)
 
             registerPicture.alpha = 0f
             // registerPicture.visibility= View.GONE
@@ -86,7 +70,7 @@ class SignupActivity : AppCompatActivity() {
 
     //Go to Login Activity:
     private fun goToLogin() {
-        val intent: Intent = Intent(this, LoginActivity::class.java)
+        val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
@@ -101,7 +85,7 @@ class SignupActivity : AppCompatActivity() {
 
         //Firebase Auth tings:------------------------
 
-        var alert = AlertDialog.Builder(this)
+        val alert = AlertDialog.Builder(this)
         alert.apply {
             //setTitle("Error:")
             setPositiveButton("OK", null)
@@ -143,7 +127,7 @@ class SignupActivity : AppCompatActivity() {
 
     //Go to Maps:
     private fun goToMaps() {
-        var intent = Intent(this, MapsActivity::class.java)
+        val intent = Intent(this, MapsActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
@@ -171,15 +155,26 @@ class SignupActivity : AppCompatActivity() {
     //Add user to Database:
     private fun addUserToDatabase(username: String, email: String, url: String) {
 
+        //set up users database:
+
         val userReference = firestore.collection("Users").document(email).collection("Account Information").document("Personal Details")
-        val bonusRangeReference = firestore.collection("Users").document(email).collection("Bonuses").document("Range+")
+        val bonusReference = firestore.collection("Users").document(email).collection("Bonuses")
+        val bonusRangeReference = bonusReference.document("Range+")
+        val bonusMarkerCurrencyReference = bonusReference.document("Coin Currency")
+        val bonusMarkerValueReference = bonusReference.document("Coin Value")
 
         ///addd bonus features
 
         userReference.set(User(username, url)).addOnCompleteListener {
+            bonusRangeReference.set(Bonus(false))
+            bonusMarkerCurrencyReference.set(Bonus(false))
+            bonusMarkerValueReference.set(Bonus(false))
 
+            //not initialised coins as they get initialised by their own piece of code.
+            //not initialised banked and sent coins as their database thingie will be deleted daily,
+            //so will be more efficient to just create whenever needed.
 
-            Log.d(tag, "User Succesfully added to the Database")
+            Log.d(tag, "User Successfully added to the Database")
         }.addOnFailureListener {
             Log.d(tag, "User NOT added to the Database!")
         }
@@ -191,16 +186,18 @@ class SignupActivity : AppCompatActivity() {
 
 class User(var username:String, var pictureURL:String)
 
+class Bonus(var activated: Boolean)
+
 class dailyUpdate() : Runnable {
     override fun run() {
 
         //Remove coins from todaysbanked, todayssent; Set bonus features to false.
 
-        var currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
+        /*var currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
         val coinMap : MutableMap<String,Any> = mutableMapOf()
 
         currValMap.put("kek","check")
-        coinMap.put("boob", currValMap)
+        coinMap.put("boob", currValMap)*/
 
         val firestore = FirebaseFirestore.getInstance()
         val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
@@ -212,8 +209,8 @@ class dailyUpdate() : Runnable {
         firestore.collection("Users").document(email).collection("Coins").document("Sent Coins Today").delete()
 
         //set bonus features to false
-        firestore.collection("Users").document(email).collection("Bonus").document("Currency Markers").update("Active", false)
-        firestore.collection("Users").document(email).collection("Bonus").document("Value Markers").update("Active", false)
+        firestore.collection("Users").document(email).collection("Bonuses").document("Coin Currency").update("activated", false)
+        firestore.collection("Users").document(email).collection("Bonuses").document("Coin Value").update("activated", false)
     }
 }
 

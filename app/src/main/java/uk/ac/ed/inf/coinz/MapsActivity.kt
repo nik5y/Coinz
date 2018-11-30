@@ -12,8 +12,6 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
-import com.google.android.gms.common.api.Api
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
 import com.mapbox.android.core.location.LocationEngine
@@ -110,7 +108,7 @@ class MapsActivity : AppCompatActivity(),
 
         map = mapboxMap
 
-        addCoinsToMap(userEmail!!, map, coinFeatures )
+        addCoinsToMap(map, coinFeatures )
 
         //locating
 
@@ -129,7 +127,7 @@ class MapsActivity : AppCompatActivity(),
     }
 
     object DownloadCompleteRunner : DownloadCompleteListener {
-        var result: String? = null
+        private var result: String? = null
         override fun downloadComplete(result: String) {
             this.result = result
         }
@@ -147,17 +145,15 @@ class MapsActivity : AppCompatActivity(),
 
             val stream : InputStream = downloadUrl(urlString)
             //read input from stream, build result as a string
-            val result : String = stream.bufferedReader().use { it.readText() }
-
-            return result
+            return stream.bufferedReader().use { it.readText() }
         }
 
         //given a string representation of a url, sets up a connection
         //and gets an input stream
         @Throws(IOException::class)
         private fun downloadUrl(urlString: String): InputStream {
-            var url = URL(urlString)
-            var conn = url.openConnection() as HttpURLConnection
+            val url = URL(urlString)
+            val conn = url.openConnection() as HttpURLConnection
             conn.apply{
                 readTimeout = 10000
                 connectTimeout = 15000
@@ -174,7 +170,7 @@ class MapsActivity : AppCompatActivity(),
         }
     }
 
-    fun enableLocation() {
+    private fun enableLocation() {
         if(PermissionsManager.areLocationPermissionsGranted(this)) {
             Log.d(tag, "Permissions are granted")
             initialiseLocationEngine()
@@ -263,8 +259,8 @@ class MapsActivity : AppCompatActivity(),
     }
 
 
-    fun goToLogin() {
-        val intent: Intent = Intent(this, LoginActivity::class.java)
+    private fun goToLogin() {
+        val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
@@ -355,10 +351,10 @@ class MapsActivity : AppCompatActivity(),
         val markerPos = marker.position
         val currentPos = LatLng(lastLocation.latitude, lastLocation.longitude)
 
-        if(coinCollectRangeBonus) {
-            coinCollectRange = 50.0
+        coinCollectRange = if(coinCollectRangeBonus) {
+            50.0
         } else {
-            coinCollectRange = 250.0
+            250.0
         }
 
         if(markerPos.distanceTo(currentPos) <= coinCollectRange) {
@@ -367,7 +363,7 @@ class MapsActivity : AppCompatActivity(),
 
             val coinMap = createCoinMap(marker)
 
-            addCoinToDatabase(userEmail!!, coinMap)
+            addCoinToDatabase(coinMap)
 
         } else {
             Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).
@@ -375,7 +371,7 @@ class MapsActivity : AppCompatActivity(),
         }
     }
 
-    private fun addCoinToDatabase(email : String, coin : MutableMap<String,Any>) {
+    private fun addCoinToDatabase( coin : MutableMap<String,Any>) {
 
         val coinReference = firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins")
 
@@ -390,7 +386,7 @@ class MapsActivity : AppCompatActivity(),
     private fun createCoinMap(marker: Marker) : MutableMap<String,Any> {
         val featuresCoin = marker.title.toString().split(" ")
 
-        var currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
+        val currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
         currValMap.put("currency",featuresCoin[1])
         currValMap.put("value",featuresCoin[2])
 
@@ -400,7 +396,7 @@ class MapsActivity : AppCompatActivity(),
         return coinMap
     }
 
-    private fun addCoinsToMap(email : String, map: MapboxMap?, coinFeatures: FeatureCollection) {
+    private fun addCoinsToMap(map: MapboxMap?, coinFeatures: FeatureCollection) {
 
         firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins").get().addOnSuccessListener {
 
@@ -469,11 +465,12 @@ class MapsActivity : AppCompatActivity(),
         val d = Duration.between(now, tomorrowStart)
         val millisUntilTomorrowStart = d.toMillis()
 
+        val sixam = getHoursUntilTarget(2)
         //scheduledExecutorService.schedule(dailyUpdate(), 0, TimeUnit.SECONDS)
 
         //scheduledExecutorService.shutdown()
 
-        scheduledExecutorService.scheduleAtFixedRate(dailyUpdate(), millisUntilTomorrowStart ,  TimeUnit.DAYS.toMillis( 1 ) ,  TimeUnit.MILLISECONDS  )
+        scheduledExecutorService.scheduleAtFixedRate(dailyUpdate(), millisUntilTomorrowStart,  TimeUnit.DAYS.toMillis( 1 ) ,  TimeUnit.MILLISECONDS  )
     }
 
     /*fun deleteCollection(collection : CollectionReference, batchSize : Long) {
@@ -495,15 +492,12 @@ class MapsActivity : AppCompatActivity(),
     System.err.println("Error deleting collection : " + e.message);
   }*/
 
-    fun delCheck() {
-
-
-
+    private fun getHoursUntilTarget(targetHour: Long): Long {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            return if (hour < targetHour) targetHour - hour else targetHour - hour + 24
     }
-
-
 }
-
 
 
 // http://m.yandex.kz/collections/card/5b6eb2f9a947cc00c1981068/ coin source//

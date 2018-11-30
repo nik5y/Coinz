@@ -26,13 +26,10 @@ class LoginActivity : AppCompatActivity() {
         loginButton.setOnClickListener {
             doLogin()
         }
-
-
-
     }
 
     //Go to SignUp
-    private fun LoginActivity.goToSignup() {
+    private fun goToSignup() {
         val intent : Intent = Intent(this, SignupActivity::class.java)
         startActivity(intent)
     }
@@ -67,13 +64,14 @@ class LoginActivity : AppCompatActivity() {
                     setMessage("${it.message}")
                     show()
                 }
+                loginPassword.setText("")
                 Log.d(tag, "Login Failed. ${it.message}")
             }
         }
     }
 
     private fun goToMap() {
-        var intent = Intent(this, MapsActivity::class.java)
+        val intent = Intent(this, MapsActivity::class.java)
         //as we already have a signout button, when taping the 'back' button at bottom left, the screen just goes to home screen
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
