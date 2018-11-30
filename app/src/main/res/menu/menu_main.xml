@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="uk.ac.ed.inf.coinz.MainActivity">
+    tools:context="uk.ac.ed.inf.coinz.MapsActivity">
 
     <item
         android:id="@+id/shop_menu"

@@ -20,9 +20,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        setSupportActionBar(toolbar)
+        //setSupportActionBar(toolbar)
 
-        fab.setOnClickListener { view ->
+        /*fab.setOnClickListener { view ->
             tally++
             Snackbar.make(view, "Tally is $tally", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
 
         buttonMaps.setOnClickListener { view ->
             switchToMaps()
-        }
+        }*/
 
     }
 

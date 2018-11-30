@@ -144,8 +144,8 @@ class SignupActivity : AppCompatActivity() {
             reference.putFile(profilePicture!!).addOnSuccessListener {
 
                 Log.d(tag, "Profile picture uploaded successfully.")
-                reference.downloadUrl.addOnSuccessListener {
-                    addUserToDatabase(username, email, it.toString())
+                reference.downloadUrl.addOnSuccessListener { url ->
+                    addUserToDatabase(username, email, url.toString())
                 }
             }
         }
@@ -184,33 +184,4 @@ class SignupActivity : AppCompatActivity() {
 
 }
 
-class User(var username:String, var pictureURL:String)
-
-class Bonus(var activated: Boolean)
-
-class dailyUpdate() : Runnable {
-    override fun run() {
-
-        //Remove coins from todaysbanked, todayssent; Set bonus features to false.
-
-        /*var currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
-        val coinMap : MutableMap<String,Any> = mutableMapOf()
-
-        currValMap.put("kek","check")
-        coinMap.put("boob", currValMap)*/
-
-        val firestore = FirebaseFirestore.getInstance()
-        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
-
-        //remove todaysbanked
-        firestore.collection("Users").document(email).collection("Coins").document("Collected Coins").delete()
-
-        //remove todayssent
-        firestore.collection("Users").document(email).collection("Coins").document("Sent Coins Today").delete()
-
-        //set bonus features to false
-        firestore.collection("Users").document(email).collection("Bonuses").document("Coin Currency").update("activated", false)
-        firestore.collection("Users").document(email).collection("Bonuses").document("Coin Value").update("activated", false)
-    }
-}
 

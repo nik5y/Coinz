@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <item
+        android:id="@+id/drawer_map"
+        android:icon="@drawable/ic_map"
+        android:title="Map" />
+
+    <item
+        android:id="@+id/drawer_coins"
+        android:icon="@drawable/ic_coin"
+        android:title="Coins" />
+
+    <item
+        android:id="@+id/drawer_shop"
+        android:icon="@drawable/ic_shopping_cart_black_24dp"
+        android:title="Shop" />
+
+
+    <item
+        android:id="@+id/drawer_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="Settings" />
+
+    <item
+        android:id="@+id/drawer_signout"
+        android:icon="@drawable/ic_signout"
+        android:title="Sign Out" />
+
+</menu>

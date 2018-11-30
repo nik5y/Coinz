@@ -8,9 +8,13 @@ import android.location.Location
 import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.view.GravityCompat
+import android.support.v4.widget.DrawerLayout
+import android.support.v7.app.ActionBarDrawerToggle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
@@ -34,6 +38,8 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_maps.*
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
@@ -80,10 +86,16 @@ class MapsActivity : AppCompatActivity(),
 
     private var iconId : Int = 0
 
+    private lateinit var drawer : DrawerLayout
+    private lateinit var mToggle : ActionBarDrawerToggle
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+        setSupportActionBar(toolbar)
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
 
@@ -91,6 +103,38 @@ class MapsActivity : AppCompatActivity(),
             mapView?.onCreate(savedInstanceState)
             mapView?.getMapAsync(this)
 
+        /*floatingActionButton.setOnClickListener {
+
+        }*/
+
+
+        /*mDrawerLayout = DrawerLayout(this@MapsActivity)
+
+        mToggle = ActionBarDrawerToggle(this, mDrawerLayout, R.string.open,R.string.close)
+
+        mDrawerLayout!!.addDrawerListener(mToggle!!)
+        mToggle!!.syncState()
+
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)*/
+
+        drawer = findViewById(R.id.drawer_layout)
+
+        mToggle = ActionBarDrawerToggle(this, drawer, toolbar,
+                R.string.nav_open, R.string.nav_close)
+
+        drawer.addDrawerListener(mToggle)
+        mToggle.syncState()
+
+
+    }
+
+    override fun onBackPressed() {
+
+        if(drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
     }
 
 
@@ -340,6 +384,12 @@ class MapsActivity : AppCompatActivity(),
                 goToLogin()
                 return true}
         }
+        return super.onOptionsItemSelected(item)
+
+        /*if(mToggle!!.onOptionsItemSelected(item)){
+            return true
+        }
+*/
         return super.onOptionsItemSelected(item)
     }
 
