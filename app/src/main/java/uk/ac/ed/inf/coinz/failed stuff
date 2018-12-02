@@ -1,0 +1,170 @@
+
+
+SCHEDULE:
+
+
+fun scheduleInit() {
+        //SCHEDULE
+
+        val scheduledExecutorService : ScheduledExecutorService = Executors.newScheduledThreadPool(1)
+        val now = OffsetDateTime.now(ZoneOffset.UTC)
+
+        val today = now.toLocalDate()
+        val tomorrow = today.plusDays(1)
+
+        val tomorrowStart = OffsetDateTime.of(
+                tomorrow,
+                LocalTime.MIN,
+                ZoneOffset.UTC
+        )
+
+        val d = Duration.between(now, tomorrowStart)
+        val millisUntilTomorrowStart = d.toMillis()
+
+        val sixam = getHoursUntilTarget(2)
+        //scheduledExecutorService.schedule(dailyUpdate(), 0, TimeUnit.SECONDS)
+
+        //scheduledExecutorService.shutdown()
+
+        //scheduledExecutorService.scheduleAtFixedRate(dailyUpdate(), millisUntilTomorrowStart,  TimeUnit.DAYS.toMillis( 1 ) ,  TimeUnit.MILLISECONDS  )
+
+        Timer("Deleting Coins", false).schedule(millisUntilTomorrowStart) {
+            deletettt()
+        }
+
+    }
+
+
+ANDROID-JOB:
+
+for the class:
+
+package uk.ac.ed.inf.coinz
+
+import android.app.Application
+import android.os.Bundle
+import com.evernote.android.job.JobManager
+import android.support.annotation.NonNull
+import com.evernote.android.job.Job
+import com.evernote.android.job.JobCreator
+import com.evernote.android.job.JobRequest
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.evernote.android.job.DailyJob.schedule
+import android.support.v4.app.NotificationManagerCompat
+import android.content.Intent
+import android.app.PendingIntent
+import java.time.Duration
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+
+
+class App : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        JobManager.create(this).addJobCreator(DemoJobCreator())
+        ShowNotificationJob.scheduleExact()
+    }
+
+}
+
+class DemoJobCreator : JobCreator {
+
+        override fun create(tag: String): Job? {
+            when (tag) {
+                ShowNotificationJob.TAG -> return ShowNotificationJob()
+                else -> return null
+            }
+        }
+    }
+
+
+/*
+class DemoSyncJob : Job() {
+
+
+    override fun onRunJob(params: Job.Params): Job.Result {
+        // run your job here
+        val firestore = FirebaseFirestore.getInstance()
+        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
+
+        //remove todaysbanked
+        firestore.collection("Users").document(email).collection("Coins").document("Collected Coins").delete()
+
+        return Job.Result.SUCCESS
+    }
+
+    companion object {
+
+        val TAG = "job_demo_tag"
+
+        fun scheduleExactJob() {
+            JobRequest.Builder(DemoSyncJob.TAG)
+                    .setExact(100)
+                    .build()
+                    .schedule()
+        }
+    }
+}*/
+
+class ShowNotificationJob : Job() {
+
+    override fun onRunJob(params: Job.Params): Job.Result {
+
+        val firestore = FirebaseFirestore.getInstance()
+        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
+
+        //remove todaysbanked
+        firestore.collection("Users").document(email).collection("Coins").document("Collected Coins").delete()
+
+        return Job.Result.SUCCESS
+    }
+
+    companion object {
+
+        val TAG = "show_notification_job_tag"
+
+        fun scheduleExact() {
+            val now = OffsetDateTime.now(ZoneOffset.UTC)
+
+            val today = now.toLocalDate()
+            val tomorrow = today.plusDays(1)
+
+            val tomorrowStart = OffsetDateTime.of(
+                    tomorrow,
+                    LocalTime.MIN,
+                    ZoneOffset.UTC
+            )
+
+            val d = Duration.between(now, tomorrowStart)
+            val millisUntilTomorrowStart = d.toMillis()
+
+            JobRequest.Builder(ShowNotificationJob.TAG)
+                    .setExact(5000)
+                    .build()
+                    .schedule()
+        }
+    }
+}
+
+
+for the activity:
+
+////JobManager.create(applicationContext).addJobCreator(DemoJobCreator())
+
+        //ShowNotificationJob.scheduleExact()
+
+
+
+HOURS TILL INT:
+
+private fun getHoursUntilTarget(targetHour: Long): Long {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            return if (hour < targetHour) targetHour - hour else targetHour - hour + 24
+    }
+
+
+

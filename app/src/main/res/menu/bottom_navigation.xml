@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <group android:checkableBehavior="single">
+    <item
+        android:id="@+id/nav_shop"
+        android:icon="@drawable/ic_shopping_cart_black_24dp"
+        android:title="Shop"/>
+
+    <item
+        android:id="@+id/nav_coins"
+        android:icon="@drawable/ic_coin"
+        android:title="Coins"/>
+
+    <item
+        android:id="@+id/nav_gamble"
+        android:icon="@drawable/ic_launcher_background"
+        android:title="Gambling"/>
+
+    </group>
+
+</menu>

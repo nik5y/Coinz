@@ -3,6 +3,9 @@
 package uk.ac.ed.inf.coinz
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.AsyncTask
@@ -14,7 +17,6 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
@@ -38,7 +40,6 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_maps.*
 import org.json.JSONObject
 import java.io.IOException
@@ -46,14 +47,7 @@ import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
-import java.time.Duration
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 
 class MapsActivity : AppCompatActivity(),
@@ -85,17 +79,22 @@ class MapsActivity : AppCompatActivity(),
     private var coinCollectRange : Double = 0.0
 
     private var iconId : Int = 0
-
+/*
     private lateinit var drawer : DrawerLayout
-    private lateinit var mToggle : ActionBarDrawerToggle
-
-
-
+    private lateinit var mToggle : ActionBarDrawerToggle*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         setSupportActionBar(toolbar)
+
+        setDailyCoinDelete()
+
+        if (mAuth.currentUser == null) {
+            goToLogin()
+        }
+
+        userEmail = mAuth.currentUser?.email
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
 
@@ -103,39 +102,25 @@ class MapsActivity : AppCompatActivity(),
             mapView?.onCreate(savedInstanceState)
             mapView?.getMapAsync(this)
 
-        /*floatingActionButton.setOnClickListener {
-
-        }*/
-
-
-        /*mDrawerLayout = DrawerLayout(this@MapsActivity)
-
-        mToggle = ActionBarDrawerToggle(this, mDrawerLayout, R.string.open,R.string.close)
-
-        mDrawerLayout!!.addDrawerListener(mToggle!!)
-        mToggle!!.syncState()
-
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)*/
-
-        drawer = findViewById(R.id.drawer_layout)
+       /* drawer = findViewById(R.id.drawer_layout)
 
         mToggle = ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.nav_open, R.string.nav_close)
 
         drawer.addDrawerListener(mToggle)
-        mToggle.syncState()
+        mToggle.syncState()*/
 
 
     }
 
-    override fun onBackPressed() {
+    /*override fun onBackPressed() {
 
         if(drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START)
         } else {
             super.onBackPressed()
         }
-    }
+    }*/
 
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
@@ -159,7 +144,7 @@ class MapsActivity : AppCompatActivity(),
         enableLocation()
 
         map?.setOnMarkerClickListener {
-            coinCollect(it, coinCollectRangeBonus)
+            coinCollect(it)
             true
         }
     }
@@ -323,14 +308,6 @@ class MapsActivity : AppCompatActivity(),
 
         mapView?.onStart()
 
-        if (mAuth.currentUser == null) {
-            goToLogin()
-        }
-
-        userEmail = mAuth.currentUser?.email
-
-        scheduleInit()
-
     }
 
     override fun onResume() {
@@ -379,22 +356,25 @@ class MapsActivity : AppCompatActivity(),
 
     override fun onOptionsItemSelected(item: MenuItem?) : Boolean  {
         when (item?.itemId) {
-            R.id.sign_out_menu -> {
+            /*R.id.sign_out_menu -> {
                 mAuth.signOut()
                 goToLogin()
-                return true}
+                return true}*/
+            R.id.shop_menu -> {
+                goToInteractive()
+                return true
+            }
         }
         return super.onOptionsItemSelected(item)
 
-        /*if(mToggle!!.onOptionsItemSelected(item)){
-            return true
-        }
-*/
-        return super.onOptionsItemSelected(item)
+
+        // if(mToggle!!.onOptionsItemSelected(item)){
+        // return true
+        // }
     }
 
     @SuppressLint("MissingPermission")
-    private fun coinCollect(marker : Marker, coinCollectRangeBonus : Boolean) {
+    private fun coinCollect(marker : Marker) {
 
         val lastLocation = locationEngine!!.lastLocation
 
@@ -411,7 +391,7 @@ class MapsActivity : AppCompatActivity(),
 
             marker.remove()
 
-            val coinMap = createCoinMap(marker)
+            val coinMap = createCoinMutableMap(marker)
 
             addCoinToDatabase(coinMap)
 
@@ -433,7 +413,7 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
-    private fun createCoinMap(marker: Marker) : MutableMap<String,Any> {
+    private fun createCoinMutableMap(marker: Marker) : MutableMap<String,Any> {
         val featuresCoin = marker.title.toString().split(" ")
 
         val currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
@@ -486,6 +466,8 @@ class MapsActivity : AppCompatActivity(),
                 }
             }
 
+            Log.d(tag, "Added Coins to Map")
+
             //map?.getUiSettings()?.setRotateGesturesEnabled(false)
             //map?.getUiSettings()?.setLogoGravity(Gravity.BOTTOM | Gravity.END);
             //map?.getUiSettings()?.setLogoEnabled(true);
@@ -495,59 +477,39 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
+
+    //Formatting digits
     fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
 
-    fun scheduleInit() {
-        //SCHEDULE
 
-        val scheduledExecutorService : ScheduledExecutorService = Executors.newScheduledThreadPool(1)
-        val now = OffsetDateTime.now(ZoneOffset.UTC)
+    //Setting an Alarm to delete coins at midnight
+    private fun setDailyCoinDelete(){
 
-        val today = now.toLocalDate()
-        val tomorrow = today.plusDays(1)
+        val calendar: Calendar = Calendar.getInstance().apply {
+            timeInMillis = System.currentTimeMillis()
+            set(Calendar.HOUR_OF_DAY, 0);
+            set(Calendar.MINUTE, 0);
+            set(Calendar.SECOND, 0);
+            set(Calendar.MILLISECOND, 0)
+        }
+        val alarmMan = getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        val tomorrowStart = OffsetDateTime.of(
-                tomorrow,
-                LocalTime.MIN,
-                ZoneOffset.UTC
-        )
+        val intent = Intent(this,DailyCoinDelete::class.java)
 
-        val d = Duration.between(now, tomorrowStart)
-        val millisUntilTomorrowStart = d.toMillis()
+        val pendIntent = PendingIntent.getBroadcast(this,0,intent,0)
+        alarmMan.setRepeating(AlarmManager.RTC,calendar.timeInMillis , 24*60*60*1000, pendIntent)
+        Log.d(tag, "Alarm for daily coin deletion set")
 
-        val sixam = getHoursUntilTarget(2)
-        //scheduledExecutorService.schedule(dailyUpdate(), 0, TimeUnit.SECONDS)
-
-        //scheduledExecutorService.shutdown()
-
-        scheduledExecutorService.scheduleAtFixedRate(dailyUpdate(), millisUntilTomorrowStart,  TimeUnit.DAYS.toMillis( 1 ) ,  TimeUnit.MILLISECONDS  )
     }
 
-    /*fun deleteCollection(collection : CollectionReference, batchSize : Long) {
-        try {
-    // retrieve a small batch of documents to avoid out-of-memory errors
-        val future : Task<QuerySnapshot> = collection.limit(batchSize).get();
-        var deleted = 0;
-    // future.get() blocks on document retrieval
-        val documents : List<QueryDocumentSnapshot>  = ;
-    for (document in documents) {
-      document.getReference().delete();
-      ++deleted;
-    }
-    if (deleted >= batchSize) {
-      // retrieve and delete another batch
-      deleteCollection(collection, batchSize);
-    }
-  } catch (e : Exception) {
-    System.err.println("Error deleting collection : " + e.message);
-  }*/
+    fun goToInteractive(){
+        val intent = Intent(this, InteractiveActivity::class.java)
 
-    private fun getHoursUntilTarget(targetHour: Long): Long {
-        val calendar = Calendar.getInstance()
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-            return if (hour < targetHour) targetHour - hour else targetHour - hour + 24
+        startActivity(intent)
     }
 }
+
+
 
 
 // http://m.yandex.kz/collections/card/5b6eb2f9a947cc00c1981068/ coin source//

@@ -37,9 +37,17 @@
         </activity>
         <activity android:name=".LoginActivity" />
         <activity android:name=".SignupActivity" />
-        <activity
-            android:name=".MessengerActivity"
-            android:label="@string/title_activity_messenger" />
+
+        <receiver
+            android:name=".DailyCoinDelete"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity android:name=".InteractiveActivity"
+            >
+
+        </activity>
+
     </application>
 
 </manifest>
