@@ -6,6 +6,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowAnimationStyle">@style/SlidingActivityAnimation</item>
 
     </style>
 
@@ -20,6 +21,18 @@
 
     <style name="MyTheme.TranslucentNavigation" parent="AppTheme">
         <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+
+    <style name="AppTheme.SlidrActivityTheme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="SlidingActivityAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/right_slide_in</item>
+        <item name="android:activityOpenExitAnimation">@anim/left_slide_out</item>
+        <item name="android:activityCloseEnterAnimation">@anim/left_slide_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/right_slide_out</item>
     </style>
 
 

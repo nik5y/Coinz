@@ -14,6 +14,7 @@ import android.os.Bundle
 import android.support.v4.view.GravityCompat
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -40,14 +41,23 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
+import com.r0adkll.slidr.Slidr
+import com.r0adkll.slidr.model.SlidrConfig
+import com.r0adkll.slidr.model.SlidrPosition
 import kotlinx.android.synthetic.main.activity_maps.*
+import org.joda.time.DateTime
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
+import java.time.Duration
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
+import kotlin.concurrent.schedule
 
 
 class MapsActivity : AppCompatActivity(),
@@ -110,6 +120,11 @@ class MapsActivity : AppCompatActivity(),
         drawer.addDrawerListener(mToggle)
         mToggle.syncState()*/
 
+        val config = SlidrConfig.Builder()
+                .position(SlidrPosition.RIGHT)
+                .build()
+
+        Slidr.attach(this, config)
 
     }
 
@@ -313,6 +328,9 @@ class MapsActivity : AppCompatActivity(),
     override fun onResume() {
         super.onResume()
         mapView?.onResume()
+
+        reCreateMap()
+
     }
 
     override fun onPause() {
@@ -376,31 +394,43 @@ class MapsActivity : AppCompatActivity(),
     @SuppressLint("MissingPermission")
     private fun coinCollect(marker : Marker) {
 
-        val lastLocation = locationEngine!!.lastLocation
+        if (locationEngine == null || locationEngine!!.lastLocation == null) {
 
-        val markerPos = marker.position
-        val currentPos = LatLng(lastLocation.latitude, lastLocation.longitude)
+            val alert = AlertDialog.Builder(this)
+            alert.apply {
 
-        coinCollectRange = if(coinCollectRangeBonus) {
-            50.0
-        } else {
-            250.0
-        }
-
-        if(markerPos.distanceTo(currentPos) <= coinCollectRange) {
-
-            marker.remove()
-
-            val coinMap = createCoinMutableMap(marker)
-
-            addCoinToDatabase(coinMap)
+                setPositiveButton("OK", null)
+                setCancelable(true)
+                setMessage("Please wait until your location is found")
+                create().show()
+            }
 
         } else {
-            Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).
-                    format(0)}m out of Range!", Toast.LENGTH_LONG).show()
+
+            val lastLocation = locationEngine!!.lastLocation
+
+            val markerPos = marker.position
+            val currentPos = LatLng(lastLocation.latitude, lastLocation.longitude)
+
+            coinCollectRange = if (coinCollectRangeBonus) {
+                50.0
+            } else {
+                250.0
+            }
+
+            if (markerPos.distanceTo(currentPos) <= coinCollectRange) {
+
+                marker.remove()
+
+                val coinMap = createCoinMutableMap(marker)
+
+                addCoinToDatabase(coinMap)
+
+            } else {
+                Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).format(0)}m out of Range!", Toast.LENGTH_LONG).show()
+            }
         }
     }
-
     private fun addCoinToDatabase( coin : MutableMap<String,Any>) {
 
         val coinReference = firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins")
@@ -485,20 +515,46 @@ class MapsActivity : AppCompatActivity(),
     //Setting an Alarm to delete coins at midnight
     private fun setDailyCoinDelete(){
 
-        val calendar: Calendar = Calendar.getInstance().apply {
+        /*val calendar: Calendar = Calendar.getInstance().apply {
             timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, 0);
-            set(Calendar.MINUTE, 0);
-            set(Calendar.SECOND, 0);
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-        }
+            //add(Calendar.DAY_OF_MONTH, 1)
+        }*/
+
+       val millisUntilTomorrowStart = millisUntilTomorrowStart()
+
+       /* val today =  DateTime().withTimeAtStartOfDay();
+        val tomorrow = today.plusDays(1).withTimeAtStartOfDay()*/
+
         val alarmMan = getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val intent = Intent(this,DailyCoinDelete::class.java)
 
-        val pendIntent = PendingIntent.getBroadcast(this,0,intent,0)
-        alarmMan.setRepeating(AlarmManager.RTC,calendar.timeInMillis , 24*60*60*1000, pendIntent)
+        val pendIntent = PendingIntent.getBroadcast(this,0,intent,PendingIntent.FLAG_CANCEL_CURRENT)
+
+        alarmMan.cancel(pendIntent)
+
+        alarmMan.setRepeating(AlarmManager.RTC, Date().time + millisUntilTomorrowStart , 24*60*60*1000, pendIntent)
         Log.d(tag, "Alarm for daily coin deletion set")
+
+    }
+
+    fun reCreateMap() {
+
+        //Timer used here as the map should be recreated at midnight only if the user is actually playing.
+        //If the user is not playing, the map will get changed automatically at next launch
+
+        val millisUntilTomorrowStart = millisUntilTomorrowStart()
+
+
+        Timer("Deleting Coins", false).schedule(millisUntilTomorrowStart+1000*60) {
+            Log.d(tag, "ReCreating Maps for new Coins")
+            goToMaps()
+        }
+
 
     }
 
@@ -506,6 +562,31 @@ class MapsActivity : AppCompatActivity(),
         val intent = Intent(this, InteractiveActivity::class.java)
 
         startActivity(intent)
+
+        overridePendingTransition(R.anim.left_slide_in,R.anim.right_slide_out)
+    }
+
+    fun goToMaps() {
+
+        val intent = Intent(this, MapsActivity::class.java)
+        startActivity(intent)
+
+    }
+
+    fun millisUntilTomorrowStart() : Long {
+
+        val now = OffsetDateTime.now(ZoneOffset.UTC)
+        val today = now.toLocalDate()
+        val tomorrow = today.plusDays(1)
+        val tomorrowStart = OffsetDateTime.of(
+                tomorrow,
+                LocalTime.MIN,
+                ZoneOffset.UTC
+        )
+        val d = Duration.between(now, tomorrowStart)
+        val millisUntilTomorrowStart = d.toMillis()
+
+        return millisUntilTomorrowStart
     }
 }
 

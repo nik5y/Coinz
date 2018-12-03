@@ -19,6 +19,8 @@ class DailyCoinDelete : BroadcastReceiver() {
 
         //remove todaysbanked
         firestore.collection("Users").document(email).collection("Coins").document("Collected Coins").delete()
-    }
 
+
+
+    }
 }

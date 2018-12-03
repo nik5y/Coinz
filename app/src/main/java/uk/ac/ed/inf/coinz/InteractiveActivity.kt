@@ -6,10 +6,14 @@ import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.design.widget.NavigationView
 import android.support.v4.app.FragmentTransaction
+import android.support.v7.widget.LinearLayoutManager
 import android.view.MenuItem
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.Toast
+import com.r0adkll.slidr.Slidr
 import kotlinx.android.synthetic.main.activity_interactive.*
+import kotlinx.android.synthetic.main.fragment_coins.*
 import kotlinx.android.synthetic.main.fragment_shop.*
 
 class InteractiveActivity : AppCompatActivity() {
@@ -47,32 +51,18 @@ class InteractiveActivity : AppCompatActivity() {
         bottom_navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
 
         supportFragmentManager.beginTransaction().add(R.id.fragment_container, ShopFragment()).commit()
+
+        Slidr.attach(this)
+
+
+
+
+
 }
 
-   /* private fun createShopFragment() {
-        val transaction = supFragManager.beginTransaction()
-        val fragment = ShopFragment()
-        transaction.replace(R.id.fragment_container, fragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.right_slide_in,R.anim.left_slide_out)
     }
-
-    private fun createGambleFragment() {
-        val transaction = supFragManager.beginTransaction()
-        val fragment = GambleFragment()
-        transaction.replace(R.id.fragment_container, fragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
-    }
-
-    private fun createCoinsFragment() {
-        val transaction = supFragManager.beginTransaction()
-        val fragment = CoinsFragment()
-        transaction.replace(R.id.fragment_container, fragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
-    }
-*/
-
 
 }
