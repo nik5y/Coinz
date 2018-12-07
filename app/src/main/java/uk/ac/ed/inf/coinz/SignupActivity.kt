@@ -157,7 +157,7 @@ class SignupActivity : AppCompatActivity() {
 
         //set up users database:
 
-        val userReference = firestore.collection("Users").document(email).collection("Account Information").document("Personal Details")
+        val userReference = firestore.collection("Users").document(email).collection("Account Information")
         val bonusReference = firestore.collection("Users").document(email).collection("Bonuses")
         val bonusRangeReference = bonusReference.document("Range+")
         val bonusMarkerCurrencyReference = bonusReference.document("Coin Currency")
@@ -165,7 +165,8 @@ class SignupActivity : AppCompatActivity() {
 
         ///addd bonus features
 
-        userReference.set(User(username, url)).addOnCompleteListener {
+        userReference.document("Personal Details").set(User(username, url)).addOnCompleteListener {
+            userReference.document("Gold Balance").set(Bank())
             bonusRangeReference.set(Bonus(false))
             bonusMarkerCurrencyReference.set(Bonus(false))
             bonusMarkerValueReference.set(Bonus(false))
@@ -178,7 +179,6 @@ class SignupActivity : AppCompatActivity() {
         }.addOnFailureListener {
             Log.d(tag, "User NOT added to the Database!")
         }
-
 
     }
 

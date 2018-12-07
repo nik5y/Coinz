@@ -15,7 +15,6 @@ import kotlinx.android.synthetic.main.fragment_coins.*
 
 class CoinsFragment : Fragment() {
 
-    val users = ArrayList<CoinRecyclerClass>()
     private val firestore = FirebaseFirestore.getInstance()
     private var mAuth = FirebaseAuth.getInstance()
     private val userEmail = mAuth.currentUser?.email
@@ -30,32 +29,9 @@ class CoinsFragment : Fragment() {
 
         recyc.layoutManager = LinearLayoutManager(activity, LinearLayout.VERTICAL, false)
 
-
-        users.add(CoinRecyclerClass("SHIL", "BIL"))
-        users.add(CoinRecyclerClass("SHIL", "B123L"))
-        users.add(CoinRecyclerClass("PENY", "BI123L"))
-        users.add(CoinRecyclerClass("DOLR", "BI123L"))
-        users.add(CoinRecyclerClass("PENY", "00000000BIL"))
-        users.add(CoinRecyclerClass("PENY", "BIL"))
-        users.add(CoinRecyclerClass("SHIL", "B123L"))
-        users.add(CoinRecyclerClass("QUID", "BI123L"))
-        users.add(CoinRecyclerClass("QUID", "BI123L"))
-        users.add(CoinRecyclerClass("DOLR", "00000000BIL"))
-        users.add(CoinRecyclerClass("DOLR", "BIL"))
-        users.add(CoinRecyclerClass("SHIL", "B123L"))
-        users.add(CoinRecyclerClass("DOLR", "BI123L"))
-        users.add(CoinRecyclerClass("PENY", "BI123L"))
-        users.add(CoinRecyclerClass("PENY", "00000000BIL"))
-
-        /*for (u in users) {
-            pls.add(LetsDoDis(u.currency,u.value,resources.getIdentifier(u.iconName, "drawable", "uk.ac.ed.inf.coinz")))
-        }*/
-        /*val res = getCoinObject()
-        val a = 1*/
-
     readData(object : MyCallback {
         override fun onCallback(value: ArrayList<CoinRecyclerViewClass>) {
-            recyc.adapter = CoinRecyclerAdapter(value)
+            recyc.adapter = CoinRecyclerAdapter(context!!, value)
         }
     })
 
@@ -73,9 +49,9 @@ class CoinsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (users.isEmpty()) {
-            coins_fragment_nocoins.visibility = View.VISIBLE
-        }
+        //todo add a text when there are no coin collected. i.e adjust visibility depending on array size
+
+
     }
 
     interface MyCallback {
@@ -92,7 +68,7 @@ class CoinsFragment : Fragment() {
                 for (key in coinMaps.keys) {
                     val coinInfoMap = coinMaps[key] as MutableMap<String, String>
                     //coinInfoMap["currency"]
-                    coinsArray.add(CoinRecyclerViewClass(coinInfoMap["currency"]!!, coinInfoMap["value"]!!, resources.getIdentifier(coinInfoMap["currency"]!!.toLowerCase(), "drawable", "uk.ac.ed.inf.coinz")))
+                    coinsArray.add(CoinRecyclerViewClass(key, coinInfoMap["currency"]!!, coinInfoMap["value"]!!, resources.getIdentifier(coinInfoMap["currency"]!!.toLowerCase(), "drawable", "uk.ac.ed.inf.coinz")))
                 }
 
                 callback.onCallback(coinsArray)

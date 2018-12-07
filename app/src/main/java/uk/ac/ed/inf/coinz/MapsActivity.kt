@@ -21,6 +21,7 @@ import android.view.MenuItem
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
+import com.google.gson.Gson
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
@@ -70,25 +71,32 @@ class MapsActivity : AppCompatActivity(),
     private lateinit var permissionManager: PermissionsManager
     private lateinit var originLocation: Location
 
-    private var locationEngine : LocationEngine? = null
+    private var locationEngine: LocationEngine? = null
 
     private var locationLayerPlugin: LocationLayerPlugin? = null
 
     private var mAuth = FirebaseAuth.getInstance()
 
-    private var userEmail : String? = null
+    private var userEmail: String? = null
 
     private val firestore = FirebaseFirestore.getInstance()
 
-    private var coinsToRemove : MutableSet<String>? = null
+    private var coinsToRemove: MutableSet<String>? = null
 
-    private var currencyMarkerBonus : Boolean = true
-    private var valueMarkerBonus : Boolean = true
-    private var coinCollectRangeBonus : Boolean = false
+    private var currencyMarkerBonus: Boolean = true
+    private var valueMarkerBonus: Boolean = true
+    private var coinCollectRangeBonus: Boolean = false
 
-    private var coinCollectRange : Double = 0.0
+    private var coinCollectRange: Double = 0.0
 
-    private var iconId : Int = 0
+    private var iconId: Int = 0
+
+    public val SHARED_PREFS = "sharedPreferences"
+    public val JSON_MAP = "Map"
+    public val JSON_RATES = "Rates"
+    public val DOWNLOAD_DATE = "Download Date"
+
+
 /*
     private lateinit var drawer : DrawerLayout
     private lateinit var mToggle : ActionBarDrawerToggle*/
@@ -108,11 +116,14 @@ class MapsActivity : AppCompatActivity(),
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
 
-            mapView = findViewById(R.id.mapView)
-            mapView?.onCreate(savedInstanceState)
-            mapView?.getMapAsync(this)
+        mapView = findViewById(R.id.mapView)
+        mapView?.onCreate(savedInstanceState)
+        mapView?.getMapAsync(this)
 
-       /* drawer = findViewById(R.id.drawer_layout)
+        //locating
+
+
+        /* drawer = findViewById(R.id.drawer_layout)
 
         mToggle = ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.nav_open, R.string.nav_close)
@@ -120,54 +131,49 @@ class MapsActivity : AppCompatActivity(),
         drawer.addDrawerListener(mToggle)
         mToggle.syncState()*/
 
-        val config = SlidrConfig.Builder()
-                .position(SlidrPosition.RIGHT)
-                .build()
+        val config = SlidrConfig.Builder().position(SlidrPosition.RIGHT).build()
 
         Slidr.attach(this, config)
 
-    }
-
-    /*override fun onBackPressed() {
-
-        if(drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
+        loglog.setOnClickListener {
+            goToLogin()
         }
-    }*/
+
+    }
 
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
 
         //DOWNLOADING
 
-        val date = SimpleDateFormat("yyyy/MM/dd").format(Date())
-        val mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
-        val coins : String = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
-        val coinFeatures : FeatureCollection = FeatureCollection.fromJson(coins)
+        downloadMap()
 
-        val rates : JSONObject = JSONObject(coins).get("rates") as JSONObject
+        val coins = getMap()
 
+        //todo put rates into sharedpreferences
+
+        //val date = SimpleDateFormat("yyyy/MM/dd").format(Date())
+        // val mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
+        //val coins : String = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
+        val coinFeatures: FeatureCollection = FeatureCollection.fromJson(coins)
 
         map = mapboxMap
 
-        addCoinsToMap(map, coinFeatures )
-
-        //locating
-
-        enableLocation()
+        addCoinsToMap(map, coinFeatures)
 
         map?.setOnMarkerClickListener {
             coinCollect(it)
             true
         }
+
+        enableLocation()
     }
+
 
     //DOWNLOADER
 
     interface DownloadCompleteListener {
-        fun downloadComplete(result:String)
+        fun downloadComplete(result: String)
     }
 
     object DownloadCompleteRunner : DownloadCompleteListener {
@@ -177,17 +183,16 @@ class MapsActivity : AppCompatActivity(),
         }
     }
 
-    class DownloadFileTask(private val caller : DownloadCompleteListener) :
-            AsyncTask<String, Void, String>() {
+    class DownloadFileTask(private val caller: DownloadCompleteListener) : AsyncTask<String, Void, String>() {
         override fun doInBackground(vararg urls: String): String = try {
             loadFileFromNetwork(urls[0])
         } catch (e: IOException) {
             "Unable to load content. Check your network connection."
         }
 
-        private fun loadFileFromNetwork(urlString:String): String {
+        private fun loadFileFromNetwork(urlString: String): String {
 
-            val stream : InputStream = downloadUrl(urlString)
+            val stream: InputStream = downloadUrl(urlString)
             //read input from stream, build result as a string
             return stream.bufferedReader().use { it.readText() }
         }
@@ -198,7 +203,7 @@ class MapsActivity : AppCompatActivity(),
         private fun downloadUrl(urlString: String): InputStream {
             val url = URL(urlString)
             val conn = url.openConnection() as HttpURLConnection
-            conn.apply{
+            conn.apply {
                 readTimeout = 10000
                 connectTimeout = 15000
                 requestMethod = "GET"
@@ -215,12 +220,12 @@ class MapsActivity : AppCompatActivity(),
     }
 
     private fun enableLocation() {
-        if(PermissionsManager.areLocationPermissionsGranted(this)) {
+        if (PermissionsManager.areLocationPermissionsGranted(this)) {
             Log.d(tag, "Permissions are granted")
             initialiseLocationEngine()
             initialiseLocationLayer()
         } else {
-            Log.d(tag,"Permissions are not granted")
+            Log.d(tag, "Permissions are not granted")
             permissionManager = PermissionsManager(this)
             permissionManager.requestLocationPermissions(this)
         }
@@ -237,7 +242,7 @@ class MapsActivity : AppCompatActivity(),
             priority = LocationEnginePriority.HIGH_ACCURACY
             activate()
         }
-        val lastLocation : Location? = locationEngine?.lastLocation
+        val lastLocation: Location? = locationEngine?.lastLocation
         if (lastLocation != null) {
             originLocation = lastLocation
             setCameraPosition(lastLocation)
@@ -248,32 +253,35 @@ class MapsActivity : AppCompatActivity(),
 
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationLayer() {
-        if (mapView == null) { Log.d(tag,"mapView is null") }
-        else {
-            if (map == null) { Log.d(tag,"map is null") }
-            else {
-            locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
-            locationLayerPlugin?.apply{
-                setLocationLayerEnabled(true)
-                cameraMode = CameraMode.TRACKING
-                renderMode = RenderMode.NORMAL
-            }}
+        if (mapView == null) {
+            Log.d(tag, "mapView is null")
+        } else {
+            if (map == null) {
+                Log.d(tag, "map is null")
+            } else {
+                locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
+                locationLayerPlugin?.apply {
+                    setLocationLayerEnabled(true)
+                    cameraMode = CameraMode.TRACKING
+                    renderMode = RenderMode.NORMAL
+                }
+            }
         }
     }
 
     private fun setCameraPosition(location: Location) {
-        map?.animateCamera(CameraUpdateFactory.newLatLng(
-                LatLng(location.latitude, location.longitude)))
+        map?.animateCamera(CameraUpdateFactory.newLatLng(LatLng(location.latitude, location.longitude)))
     }
+
     /// Permissions listener:
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
         //Present a toast or a dialog explainging why they should provide access
-        Log.d(tag,"Permissions: $permissionsToExplain")
+        Log.d(tag, "Permissions: $permissionsToExplain")
 
     }
 
     override fun onPermissionResult(granted: Boolean) {
-        Log.d(tag,"[onPermissionResult] granted == $granted")
+        Log.d(tag, "[onPermissionResult] granted == $granted")
 
         if (granted) {
             enableLocation()
@@ -289,7 +297,7 @@ class MapsActivity : AppCompatActivity(),
     // Locations listener:
     override fun onLocationChanged(location: Location?) {
         if (location == null) {
-            Log.d(tag,"[onLocationChanged] location is null")
+            Log.d(tag, "[onLocationChanged] location is null")
         } else {
             originLocation = location
             setCameraPosition(location)
@@ -298,7 +306,7 @@ class MapsActivity : AppCompatActivity(),
 
     @SuppressWarnings("MissingPermission")
     override fun onConnected() {
-        Log.d(tag,"[onConnected] requesting location updates")
+        Log.d(tag, "[onConnected] requesting location updates")
         locationEngine?.requestLocationUpdates()
     }
 
@@ -372,9 +380,9 @@ class MapsActivity : AppCompatActivity(),
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?) : Boolean  {
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId) {
-            /*R.id.sign_out_menu -> {
+        /*R.id.sign_out_menu -> {
                 mAuth.signOut()
                 goToLogin()
                 return true}*/
@@ -392,7 +400,7 @@ class MapsActivity : AppCompatActivity(),
     }
 
     @SuppressLint("MissingPermission")
-    private fun coinCollect(marker : Marker) {
+    private fun coinCollect(marker: Marker) {
 
         if (locationEngine == null || locationEngine!!.lastLocation == null) {
 
@@ -431,26 +439,27 @@ class MapsActivity : AppCompatActivity(),
             }
         }
     }
-    private fun addCoinToDatabase( coin : MutableMap<String,Any>) {
+
+    private fun addCoinToDatabase(coin: MutableMap<String, Any>) {
 
         val coinReference = firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins")
 
-            coinReference.set(coin, SetOptions.merge()).addOnCompleteListener {
-                Log.d(tag, "Coin added to the Database")
-            }.addOnFailureListener {
-                Log.d(tag, "Coin NOT added to the Database!")
-            }
+        coinReference.set(coin, SetOptions.merge()).addOnCompleteListener {
+            Log.d(tag, "Coin added to the Database")
+        }.addOnFailureListener {
+            Log.d(tag, "Coin NOT added to the Database!")
+        }
 
     }
 
-    private fun createCoinMutableMap(marker: Marker) : MutableMap<String,Any> {
+    private fun createCoinMutableMap(marker: Marker): MutableMap<String, Any> {
         val featuresCoin = marker.title.toString().split(" ")
 
-        val currValMap : MutableMap<String,String> = mutableMapOf<String,String>()
-        currValMap.put("currency",featuresCoin[1])
-        currValMap.put("value",featuresCoin[2])
+        val currValMap: MutableMap<String, String> = mutableMapOf<String, String>()
+        currValMap.put("currency", featuresCoin[1])
+        currValMap.put("value", featuresCoin[2])
 
-        val coinMap : MutableMap<String,Any> = mutableMapOf()
+        val coinMap: MutableMap<String, Any> = mutableMapOf()
         coinMap.put(featuresCoin[0], currValMap)
 
         return coinMap
@@ -473,26 +482,23 @@ class MapsActivity : AppCompatActivity(),
                 val coinValue = i.getStringProperty("value")
 
                 if (currencyMarkerBonus) {
-                    if(valueMarkerBonus) {
-                        iconId  =  resources.getIdentifier(coinCurrency.toLowerCase()+coinValue[0], "drawable", packageName)
+                    if (valueMarkerBonus) {
+                        iconId = resources.getIdentifier(coinCurrency.toLowerCase() + coinValue[0], "drawable", packageName)
                     } else {
-                        iconId  =  resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
+                        iconId = resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
                     }
                 } else {
                     if (valueMarkerBonus) {
-                        iconId  =  resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
+                        iconId = resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
                     } else {
-                        iconId  =  resources.getIdentifier("generic_coin", "drawable", packageName)
+                        iconId = resources.getIdentifier("generic_coin", "drawable", packageName)
                     }
                 }
 
 
                 if (coinsToRemove == null || !(coinsToRemove!!.contains(coinId))) {
 
-                    map?.addMarker(MarkerOptions()
-                            .position(LatLng(point[1], point[0]))
-                            .title(coinId + " " + coinCurrency + " " + coinValue)
-                            .icon(IconFactory.getInstance(this).fromResource(iconId)))
+                    map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title(coinId + " " + coinCurrency + " " + coinValue).icon(IconFactory.getInstance(this).fromResource(iconId)))
                 }
             }
 
@@ -513,7 +519,7 @@ class MapsActivity : AppCompatActivity(),
 
 
     //Setting an Alarm to delete coins at midnight
-    private fun setDailyCoinDelete(){
+    private fun setDailyCoinDelete() {
 
         /*val calendar: Calendar = Calendar.getInstance().apply {
             timeInMillis = System.currentTimeMillis()
@@ -524,20 +530,20 @@ class MapsActivity : AppCompatActivity(),
             //add(Calendar.DAY_OF_MONTH, 1)
         }*/
 
-       val millisUntilTomorrowStart = millisUntilTomorrowStart()
+        val millisUntilTomorrowStart = millisUntilTomorrowStart()
 
-       /* val today =  DateTime().withTimeAtStartOfDay();
+        /* val today =  DateTime().withTimeAtStartOfDay();
         val tomorrow = today.plusDays(1).withTimeAtStartOfDay()*/
 
         val alarmMan = getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        val intent = Intent(this,DailyCoinDelete::class.java)
+        val intent = Intent(this, DailyCoinDelete::class.java)
 
-        val pendIntent = PendingIntent.getBroadcast(this,0,intent,PendingIntent.FLAG_CANCEL_CURRENT)
+        val pendIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT)
 
         alarmMan.cancel(pendIntent)
 
-        alarmMan.setRepeating(AlarmManager.RTC, Date().time + millisUntilTomorrowStart , 24*60*60*1000, pendIntent)
+        alarmMan.setRepeating(AlarmManager.RTC, Date().time + millisUntilTomorrowStart, 24 * 60 * 60 * 1000, pendIntent)
         Log.d(tag, "Alarm for daily coin deletion set")
 
     }
@@ -550,7 +556,7 @@ class MapsActivity : AppCompatActivity(),
         val millisUntilTomorrowStart = millisUntilTomorrowStart()
 
 
-        Timer("Deleting Coins", false).schedule(millisUntilTomorrowStart+1000*60) {
+        Timer("Deleting Coins", false).schedule(millisUntilTomorrowStart + 1000 * 60) {
             Log.d(tag, "ReCreating Maps for new Coins")
             goToMaps()
         }
@@ -558,12 +564,12 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
-    fun goToInteractive(){
+    fun goToInteractive() {
         val intent = Intent(this, InteractiveActivity::class.java)
 
         startActivity(intent)
 
-        overridePendingTransition(R.anim.left_slide_in,R.anim.right_slide_out)
+        overridePendingTransition(R.anim.right_slide_in, R.anim.left_slide_out)
     }
 
     fun goToMaps() {
@@ -573,22 +579,70 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
-    fun millisUntilTomorrowStart() : Long {
+    fun millisUntilTomorrowStart(): Long {
 
         val now = OffsetDateTime.now(ZoneOffset.UTC)
         val today = now.toLocalDate()
         val tomorrow = today.plusDays(1)
-        val tomorrowStart = OffsetDateTime.of(
-                tomorrow,
-                LocalTime.MIN,
-                ZoneOffset.UTC
-        )
+        val tomorrowStart = OffsetDateTime.of(tomorrow, LocalTime.MIN, ZoneOffset.UTC)
         val d = Duration.between(now, tomorrowStart)
         val millisUntilTomorrowStart = d.toMillis()
 
         return millisUntilTomorrowStart
     }
+
+    private fun downloadMap() {
+
+        val date: String = SimpleDateFormat("yyyy/MM/dd").format(Date())
+        val mapURL: String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
+        //val coins : String = MapsActivity.DownloadFileTask(MapsActivity.DownloadCompleteRunner).execute(mapURL).get()
+        //val coinFeatures : FeatureCollection = FeatureCollection.fromJson(coins)
+        //val rates : JSONObject = JSONObject(coins).get("rates") as JSONObject
+
+        //todo check if shared preferences at key JSON contain another map keyed to today. if yes, output the feature collection (and possibly the rates). else, redownload and output new feature collection.
+
+        val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+
+
+        if (sharedPreferences.getString(DOWNLOAD_DATE, "dik") != date) {
+            Log.d(tag, "Downloading and storing map for $date")
+            val coins  = MapsActivity.DownloadFileTask(MapsActivity.DownloadCompleteRunner).execute(mapURL).get()
+            editor.putString(DOWNLOAD_DATE, date)
+            editor.putString(JSON_MAP, coins)
+
+            //get rates and put them in shared prefs as well
+
+            val rates = JSONObject(coins).get("rates") as JSONObject
+            Log.d(tag, "Storing rates in $SHARED_PREFS")
+            for (i in rates.keys()) {
+                val value = rates.get(i).toString()
+                editor.putString(i, value)
+            }
+            editor.apply()
+
+        } else {
+            Log.d(tag, "Map for $date already downloaded at $SHARED_PREFS")
+        }
+
+
+    }
+
+    private fun getMap(): String {
+
+        val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+
+        return sharedPreferences.getString(JSON_MAP, "No Map")
+
+    }
+
 }
+
+
+
+
+
+
 
 
 

@@ -7,6 +7,8 @@ class User(var username:String, var pictureURL:String)
 
 class Bonus(var activated: Boolean)
 
+class Bank(var goldBalance:Double = 0.0)
+
 class dailyUpdate() : Runnable {
     override fun run() {
 

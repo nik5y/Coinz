@@ -5,7 +5,7 @@
     <group android:checkableBehavior="single">
     <item
         android:id="@+id/nav_shop"
-        android:icon="@drawable/ic_shopping_cart_black_24dp"
+        android:icon="@drawable/ic_map"
         android:title="Shop"/>
 
     <item
@@ -15,7 +15,7 @@
 
     <item
         android:id="@+id/nav_gamble"
-        android:icon="@drawable/ic_launcher_background"
+        android:icon="@drawable/ic_settings"
         android:title="Gambling"/>
 
     </group>

@@ -23,17 +23,17 @@ class InteractiveActivity : AppCompatActivity() {
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener {
         when (it.itemId) {
             R.id.nav_shop -> {
-                Toast.makeText(this,"hey shop",Toast.LENGTH_LONG).show()
+                //Toast.makeText(this,"hey shop",Toast.LENGTH_LONG).show()
                 createdFrag = ShopFragment()
 
             }
             R.id.nav_coins -> {
-            Toast.makeText(this,"hey coins",Toast.LENGTH_LONG).show()
+            //Toast.makeText(this,"hey coins",Toast.LENGTH_LONG).show()
             createdFrag = CoinsFragment()
 
         }
             R.id.nav_gamble -> {
-                Toast.makeText(this,"hey gamble",Toast.LENGTH_LONG).show()
+               // Toast.makeText(this,"hey gamble",Toast.LENGTH_LONG).show()
                 createdFrag = GambleFragment()
             }
 
@@ -52,7 +52,7 @@ class InteractiveActivity : AppCompatActivity() {
 
         supportFragmentManager.beginTransaction().add(R.id.fragment_container, ShopFragment()).commit()
 
-        Slidr.attach(this)
+       // Slidr.attach(this)
 
 
 
@@ -62,7 +62,7 @@ class InteractiveActivity : AppCompatActivity() {
 
     override fun finish() {
         super.finish()
-        overridePendingTransition(R.anim.right_slide_in,R.anim.left_slide_out)
+        overridePendingTransition(R.anim.left_slide_in,R.anim.right_slide_out)
     }
 
 }

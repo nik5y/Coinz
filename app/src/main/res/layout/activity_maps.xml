@@ -44,10 +44,19 @@
         mapbox:layout_constraintTop_toTopOf="parent"
         mapbox:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
+    <ImageView
+        android:id="@+id/loglog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        app:srcCompat="@drawable/dolr"
+        mapbox:layout_constraintBottom_toBottomOf="parent"
+        mapbox:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="306dp" />
 
 
-
-<!--    </android.support.constraint.ConstraintLayout>-->
+    <!--    </android.support.constraint.ConstraintLayout>-->
 
     <!--<android.support.design.widget.NavigationView
         android:layout_width="wrap_content"
