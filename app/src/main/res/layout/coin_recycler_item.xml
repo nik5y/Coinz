@@ -5,17 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
+    android:background="@color/colorPrimary"
+    android:layout_marginTop="5dp"
     android:padding="5dp"
     android:id="@+id/coin_recycler_item">
 
     <ImageView
         android:id="@+id/coin_recycler_image"
         android:layout_width="60dp"
+        android:layout_gravity="center_vertical"
         android:layout_height="60dp"
         android:src="@drawable/peny" />
 
     <android.support.constraint.ConstraintLayout
-        android:layout_width="336dp"
+        android:layout_width="310dp"
         android:layout_height="91dp"
         android:layout_marginLeft="5dp"
         android:orientation="vertical">
@@ -24,10 +27,10 @@
             android:id="@+id/coin_recycler_currency"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:text="Coin Currency"
             android:textSize="17sp"
             android:textStyle="bold"
@@ -41,25 +44,39 @@
             android:layout_centerVertical="true"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             android:layout_toEndOf="@+id/coin_recycler_bank_coin"
             android:text="Coin Value"
             android:textSize="17sp"
             android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/coin_recycler_currency" />
 
         <ImageView
             android:id="@+id/coin_recycler_bank_coin"
-            android:layout_width="46dp"
-            android:layout_height="42dp"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:layout_gravity="center_vertical"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
             android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
             android:src="@drawable/ic_coin"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/coin_recycler_send_coin"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/coin_recycler_bank_coin"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_message" />
 
     </android.support.constraint.ConstraintLayout>
 

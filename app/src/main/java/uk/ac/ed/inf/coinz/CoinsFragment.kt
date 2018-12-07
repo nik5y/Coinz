@@ -34,7 +34,7 @@ class CoinsFragment : Fragment() {
             recyc.adapter = CoinRecyclerAdapter(context!!, value)
         }
     })
-
+//todo add go back to map button
 
         return view
 

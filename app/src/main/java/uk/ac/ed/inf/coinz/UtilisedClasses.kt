@@ -2,6 +2,7 @@ package uk.ac.ed.inf.coinz
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.*
 
 class User(var username:String, var pictureURL:String)
 
@@ -34,3 +35,5 @@ class dailyUpdate() : Runnable {
         firestore.collection("Users").document(email).collection("Bonuses").document("Coin Value").update("activated", false)
     }
 }
+
+class Created(val created : Date = Date())

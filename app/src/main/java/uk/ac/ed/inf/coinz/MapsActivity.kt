@@ -11,9 +11,6 @@ import android.location.Location
 import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.v4.view.GravityCompat
-import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.Menu
@@ -81,7 +78,7 @@ class MapsActivity : AppCompatActivity(),
 
     private val firestore = FirebaseFirestore.getInstance()
 
-    private var coinsToRemove: MutableSet<String>? = null
+    //private var coinsToRemove: MutableSet<String>? = null
 
     private var currencyMarkerBonus: Boolean = true
     private var valueMarkerBonus: Boolean = true
@@ -149,8 +146,6 @@ class MapsActivity : AppCompatActivity(),
         downloadMap()
 
         val coins = getMap()
-
-        //todo put rates into sharedpreferences
 
         //val date = SimpleDateFormat("yyyy/MM/dd").format(Date())
         // val mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
@@ -465,52 +460,92 @@ class MapsActivity : AppCompatActivity(),
         return coinMap
     }
 
+    //todo ADD RECEIVED FROM THINGY TO THE COINS
+
+    //todo ADD REALTIME LISTENER TO COIN ADDITION
+
+
     private fun addCoinsToMap(map: MapboxMap?, coinFeatures: FeatureCollection) {
 
-        firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins").get().addOnSuccessListener {
+        val coinReference = firestore.collection("Users").document(userEmail!!).collection("Coins")
 
-            val hash = it?.data
-            coinsToRemove = hash?.keys
+        var coinsToRemove : Iterable<String> = mutableListOf()
 
-            for (i in coinFeatures.features()!!) {
+        coinReference.document("Collected Coins").get().addOnSuccessListener {collected ->
 
-                val geometry = i.geometry() as Point
-                val point = geometry.coordinates()
-                // val tit = i.getStringProperty("id")
-                val coinCurrency = i.getStringProperty("currency")
-                val coinId = i.getStringProperty("id")
-                val coinValue = i.getStringProperty("value")
+            //val coinsCollected : Iterable<String> = mutableListOf()
 
-                if (currencyMarkerBonus) {
-                    if (valueMarkerBonus) {
-                        iconId = resources.getIdentifier(coinCurrency.toLowerCase() + coinValue[0], "drawable", packageName)
-                    } else {
-                        iconId = resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
-                    }
-                } else {
-                    if (valueMarkerBonus) {
-                        iconId = resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
-                    } else {
-                        iconId = resources.getIdentifier("generic_coin", "drawable", packageName)
-                    }
-                }
+            var coins = collected?.data?.keys
 
-
-                if (coinsToRemove == null || !(coinsToRemove!!.contains(coinId))) {
-
-                    map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title(coinId + " " + coinCurrency + " " + coinValue).icon(IconFactory.getInstance(this).fromResource(iconId)))
-                }
+            if(coins!=null){
+                coinsToRemove = coinsToRemove.union(coins as Iterable<String>)
+                val i = 1
             }
 
-            Log.d(tag, "Added Coins to Map")
+            coinReference.document("Sent Coins Today").get().addOnSuccessListener {sent ->
 
-            //map?.getUiSettings()?.setRotateGesturesEnabled(false)
-            //map?.getUiSettings()?.setLogoGravity(Gravity.BOTTOM | Gravity.END);
-            //map?.getUiSettings()?.setLogoEnabled(true);
-            map?.getUiSettings()?.setAttributionEnabled(false)
-            map?.getUiSettings()?.setZoomControlsEnabled(true)
+                //val coinsSent : Iterable<String> = mutableListOf()
+
+                coins = sent?.data?.keys
+                if(coins !=null){
+                    coinsToRemove=coinsToRemove.union(coins as Iterable<String>)
+                }
+
+
+                coinReference.document("Banked Coins Today").get().addOnSuccessListener {banked->
+
+                    //val coinsBanked : Iterable<String> = mutableListOf()
+                    coins = banked?.data?.keys
+                    if (coins!= null){
+                        coinsToRemove= coinsToRemove.union(coins as Iterable<String>)
+                    }
+
+
+
+
+                    //coinsToRemove.union(coinsBanked).union(coinsCollected).union(coinsSent)
+
+                    for (i in coinFeatures.features()!!) {
+
+                        val geometry = i.geometry() as Point
+                        val point = geometry.coordinates()
+                        // val tit = i.getStringProperty("id")
+                        val coinCurrency = i.getStringProperty("currency")
+                        val coinId = i.getStringProperty("id")
+                        val coinValue = i.getStringProperty("value")
+
+                        if (currencyMarkerBonus) {
+                            if (valueMarkerBonus) {
+                                iconId = resources.getIdentifier(coinCurrency.toLowerCase() + coinValue[0], "drawable", packageName)
+                            } else {
+                                iconId = resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
+                            }
+                        } else {
+                            if (valueMarkerBonus) {
+                                iconId = resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
+                            } else {
+                                iconId = resources.getIdentifier("generic_coin", "drawable", packageName)
+                            }
+                        }
+
+
+                        if (coinsToRemove == null || !(coinsToRemove!!.contains(coinId))) {
+
+                            map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title(coinId + " " + coinCurrency + " " + coinValue).icon(IconFactory.getInstance(this).fromResource(iconId)))
+                        }
+                    }
+
+                    Log.d(tag, "Added Coins to Map")
+
+                    //map?.getUiSettings()?.setRotateGesturesEnabled(false)
+                    //map?.getUiSettings()?.setLogoGravity(Gravity.BOTTOM | Gravity.END);
+                    //map?.getUiSettings()?.setLogoEnabled(true);
+                    map?.getUiSettings()?.setAttributionEnabled(false)
+                    map?.getUiSettings()?.setZoomControlsEnabled(true)
+                }
+
+             }
         }
-
     }
 
 
@@ -595,12 +630,6 @@ class MapsActivity : AppCompatActivity(),
 
         val date: String = SimpleDateFormat("yyyy/MM/dd").format(Date())
         val mapURL: String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
-        //val coins : String = MapsActivity.DownloadFileTask(MapsActivity.DownloadCompleteRunner).execute(mapURL).get()
-        //val coinFeatures : FeatureCollection = FeatureCollection.fromJson(coins)
-        //val rates : JSONObject = JSONObject(coins).get("rates") as JSONObject
-
-        //todo check if shared preferences at key JSON contain another map keyed to today. if yes, output the feature collection (and possibly the rates). else, redownload and output new feature collection.
-
         val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 

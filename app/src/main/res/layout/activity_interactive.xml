@@ -40,7 +40,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginEnd="14dp"
         android:layout_marginTop="11dp"
-        app:srcCompat="@drawable/gotointeractive" />
+        app:srcCompat="@drawable/dolr" />
 
 
 </RelativeLayout>

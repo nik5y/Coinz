@@ -18,9 +18,7 @@ class DailyCoinDelete : BroadcastReceiver() {
         val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
 
         //remove todaysbanked
-        firestore.collection("Users").document(email).collection("Coins").document("Collected Coins").delete()
-
-
-
+        firestore.collection("Users").document(email).collection("Coins").document("Sent Coins Today").delete()
+        firestore.collection("Users").document(email).collection("Coins").document("Banked Coins Today").delete()
     }
 }

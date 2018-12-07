@@ -79,7 +79,7 @@ class SignupActivity : AppCompatActivity() {
     private fun doRegistration() {
 
         val username: String = registerUsername.text.toString()
-        val email: String = registerEmail.text.toString()
+        val email: String = registerEmail.text.toString().toLowerCase()
         val password: String = registerPassword.text.toString()
         val passwordConfirm: String = registerConfirmPassword.text.toString()
 
@@ -164,6 +164,8 @@ class SignupActivity : AppCompatActivity() {
         val bonusMarkerValueReference = bonusReference.document("Coin Value")
 
         ///addd bonus features
+
+        firestore.collection("Users").document(email).set(Created())
 
         userReference.document("Personal Details").set(User(username, url)).addOnCompleteListener {
             userReference.document("Gold Balance").set(Bank())
