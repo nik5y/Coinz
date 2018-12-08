@@ -26,17 +26,29 @@ import kotlin.coroutines.experimental.coroutineContext
 
 private val tag = "CoinRecyclerAdapter"
 
-
 class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecyclerViewClass>)
     : RecyclerView.Adapter<CoinRecyclerAdapter.ViewHolder>() {
+
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
         val coin : CoinRecyclerViewClass = items[position]
         holder.coin_recycler_currency.text = coin.currency
         //rounds down
+        //add double format
         holder.coin_recycler_value.text =coin.value.subSequence(0,5)
         holder.coin_recycler_image.setImageResource(coin.iconId)
+
+        //todo add if for from thing
+
+        val firestore = FirebaseFirestore.getInstance()
+        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
+        if (email != coin.collectedBy) {
+            holder.coin_recycler_item_collectedBy.text = "From: coin.collectedBy"
+            holder.coin_recycler_item_collectedBy.visibility = View.VISIBLE
+        }
+
+
 
     }
 
@@ -76,7 +88,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
             dialog.coin_recycler_dialog_coinValue.setText(coinValue)
             dialog.coin_recycler_dialog_coin_currency.setText(coinCurrency)
             dialog.coin_recycler_dialog_image.setImageResource(iconId)
-
+//some kind of leak?
             dialog.show()
 
             dialog.coin_recycler_dialog_send_coin.setOnClickListener {
@@ -119,6 +131,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
         val coin_recycler_image = view.coin_recycler_image as ImageView
         val coin_recycler_currency = view.coin_recycler_currency as TextView
         val coin_recycler_value = view.coin_recycler_value as TextView
+        val coin_recycler_item_collectedBy = view.coin_recycler_item_collectedBy as TextView
     }
 
     fun addCoinToBank(coinId : String, coinCurrency : String, coinValue : String) {
@@ -190,7 +203,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
             create()
         }
 
-//todo cant send coins to urself
+//todo cant send coins back to the user that sent them to u
 
         if (receiverEmail.isEmpty()) {
             alert.setMessage("Please enter the email").show()
@@ -206,6 +219,10 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                     userWalletReference.document("Collected Coins").get()
                             .addOnSuccessListener { document ->
                                 if (document != null) {
+
+                                    //todo figure out why document[coinId] gives null when the id contains an email
+
+                                    val i = document["lol@lol.com_bea1-6f72-d4ce-b739-a7d4-cd75"]
 
                                     val coinMap: MutableMap<String, Any> = mutableMapOf<String, Any>()
                                     coinMap.put(email + "_" + coinId, document[coinId]!!)
@@ -223,10 +240,14 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                             }
                     items.removeAt(position)
                     notifyItemRemoved(position)
-                    dialog.hide()
+                    dialog.dismiss()
                 }
             }
         }
     }
 }
 
+//todo figure out what to do with coins when sent to other user:
+//todo 1. allow sending them back and forth between same users?
+//todo 2. allow sending them more than once?
+//todo 3. make a thingy that changes the id in some way. perhaps uses the senders username or smth..

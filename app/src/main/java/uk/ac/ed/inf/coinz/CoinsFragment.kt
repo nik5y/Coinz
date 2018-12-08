@@ -68,7 +68,8 @@ class CoinsFragment : Fragment() {
                 for (key in coinMaps.keys) {
                     val coinInfoMap = coinMaps[key] as MutableMap<String, String>
                     //coinInfoMap["currency"]
-                    coinsArray.add(CoinRecyclerViewClass(key, coinInfoMap["currency"]!!, coinInfoMap["value"]!!, resources.getIdentifier(coinInfoMap["currency"]!!.toLowerCase(), "drawable", "uk.ac.ed.inf.coinz")))
+                    coinsArray.add(CoinRecyclerViewClass(key, coinInfoMap["currency"]!!, coinInfoMap["value"]!!,
+                            resources.getIdentifier(coinInfoMap["currency"]!!.toLowerCase(), "drawable", "uk.ac.ed.inf.coinz"),coinInfoMap["collectedBy"]!!))
                 }
 
                 callback.onCallback(coinsArray)

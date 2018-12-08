@@ -62,6 +62,7 @@ class MapsActivity : AppCompatActivity(),
         PermissionsListener, LocationEngineListener, OnMapReadyCallback {
 
     private val tag = "MapsActivity"
+    private lateinit var dateCreated : String
 
     private var mapView: MapView? = null
     private var map: MapboxMap? = null
@@ -94,6 +95,8 @@ class MapsActivity : AppCompatActivity(),
     public val DOWNLOAD_DATE = "Download Date"
 
 
+
+
 /*
     private lateinit var drawer : DrawerLayout
     private lateinit var mToggle : ActionBarDrawerToggle*/
@@ -103,11 +106,13 @@ class MapsActivity : AppCompatActivity(),
         setContentView(R.layout.activity_maps)
         setSupportActionBar(toolbar)
 
-        setDailyCoinDelete()
-
         if (mAuth.currentUser == null) {
             goToLogin()
         }
+
+        dateCreated =  SimpleDateFormat("yyyy/MM/dd").format(Date())
+
+        setDailyCoinDelete()
 
         userEmail = mAuth.currentUser?.email
 
@@ -167,52 +172,6 @@ class MapsActivity : AppCompatActivity(),
 
     //DOWNLOADER
 
-    interface DownloadCompleteListener {
-        fun downloadComplete(result: String)
-    }
-
-    object DownloadCompleteRunner : DownloadCompleteListener {
-        private var result: String? = null
-        override fun downloadComplete(result: String) {
-            this.result = result
-        }
-    }
-
-    class DownloadFileTask(private val caller: DownloadCompleteListener) : AsyncTask<String, Void, String>() {
-        override fun doInBackground(vararg urls: String): String = try {
-            loadFileFromNetwork(urls[0])
-        } catch (e: IOException) {
-            "Unable to load content. Check your network connection."
-        }
-
-        private fun loadFileFromNetwork(urlString: String): String {
-
-            val stream: InputStream = downloadUrl(urlString)
-            //read input from stream, build result as a string
-            return stream.bufferedReader().use { it.readText() }
-        }
-
-        //given a string representation of a url, sets up a connection
-        //and gets an input stream
-        @Throws(IOException::class)
-        private fun downloadUrl(urlString: String): InputStream {
-            val url = URL(urlString)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.apply {
-                readTimeout = 10000
-                connectTimeout = 15000
-                requestMethod = "GET"
-                doInput = true
-                connect() // starts the query
-            }
-            return conn.inputStream
-        }
-
-        override fun onPostExecute(result: String) {
-            super.onPostExecute(result)
-            caller.downloadComplete(result)
-        }
-    }
 
     private fun enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -277,11 +236,21 @@ class MapsActivity : AppCompatActivity(),
 
     override fun onPermissionResult(granted: Boolean) {
         Log.d(tag, "[onPermissionResult] granted == $granted")
-
         if (granted) {
             enableLocation()
         } else {
             // Open dialogue for the user go do sudoku or something
+
+            val alert = AlertDialog.Builder(this)
+            alert.apply {
+
+                setPositiveButton("OK", null)
+                setCancelable(true)
+                setMessage("Location Permission Denied. In order to play the game," +
+                        " location services have to be turned on!")
+                create().show()
+            }
+
         }
     }
 
@@ -330,8 +299,14 @@ class MapsActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
+        if(dateCreated !=  SimpleDateFormat("yyyy/MM/dd").format(Date())){
+            goToMaps()
+        }
+
         mapView?.onResume()
 
+        //put here so that it triggers if a user decided to yada yada
+        //doesnt work if somebody left their map opened for over 2 midnight, which is unlikely, yet still a fault
         reCreateMap()
 
     }
@@ -453,6 +428,7 @@ class MapsActivity : AppCompatActivity(),
         val currValMap: MutableMap<String, String> = mutableMapOf<String, String>()
         currValMap.put("currency", featuresCoin[1])
         currValMap.put("value", featuresCoin[2])
+        currValMap.put("collectedBy", userEmail!!)
 
         val coinMap: MutableMap<String, Any> = mutableMapOf()
         coinMap.put(featuresCoin[0], currValMap)
@@ -636,7 +612,7 @@ class MapsActivity : AppCompatActivity(),
 
         if (sharedPreferences.getString(DOWNLOAD_DATE, "dik") != date) {
             Log.d(tag, "Downloading and storing map for $date")
-            val coins  = MapsActivity.DownloadFileTask(MapsActivity.DownloadCompleteRunner).execute(mapURL).get()
+            val coins  = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
             editor.putString(DOWNLOAD_DATE, date)
             editor.putString(JSON_MAP, coins)
 
@@ -662,9 +638,7 @@ class MapsActivity : AppCompatActivity(),
         val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
 
         return sharedPreferences.getString(JSON_MAP, "No Map")
-
     }
-
 }
 
 
