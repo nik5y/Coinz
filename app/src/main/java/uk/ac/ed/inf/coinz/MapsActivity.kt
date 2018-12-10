@@ -414,6 +414,10 @@ class MapsActivity : AppCompatActivity(),
 
                 addCoinToDatabase(coinMap)
 
+                val currVal = getCoinCurrVal(marker)
+
+                Toast.makeText(this@MapsActivity, "Collected ${currVal[0]} of value ${currVal[1].toDouble().format(3)}", Toast.LENGTH_LONG).show()
+
             } else {
                 Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).format(0)}m out of Range!", Toast.LENGTH_LONG).show()
             }
@@ -445,6 +449,12 @@ class MapsActivity : AppCompatActivity(),
         coinMap.put(featuresCoin[0], currValMap)
 
         return coinMap
+    }
+
+    private fun getCoinCurrVal(marker: Marker) : Array<String> {
+        val featuresCoin = marker.title.toString().split(" ")
+        val array : Array<String> = arrayOf(featuresCoin[1],featuresCoin[2])
+        return array
     }
 
     //todo ADD RECEIVED FROM THINGY TO THE COINS
@@ -487,9 +497,6 @@ class MapsActivity : AppCompatActivity(),
                         coinsToRemove= coinsToRemove.union(coins as Iterable<String>)
                     }
 
-
-
-
                     //coinsToRemove.union(coinsBanked).union(coinsCollected).union(coinsSent)
 
                     for (i in coinFeatures.features()!!) {
@@ -515,8 +522,7 @@ class MapsActivity : AppCompatActivity(),
                             }
                         }
 
-
-                        if (coinsToRemove == null || !(coinsToRemove!!.contains(coinId))) {
+                        if (!(coinsToRemove.contains(coinId))) {
 
                             map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title(coinId + " " + coinCurrency + " " + coinValue).icon(IconFactory.getInstance(this).fromResource(iconId)))
                         }
