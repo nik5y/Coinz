@@ -18,7 +18,6 @@ class CoinsFragment : Fragment() {
     private val firestore = FirebaseFirestore.getInstance()
     private var mAuth = FirebaseAuth.getInstance()
     private val userEmail = mAuth.currentUser?.email
-    private var coinsFromDatabse: MutableSet<String>? = null
     val coinsArray = ArrayList<CoinRecyclerViewClass>()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -58,8 +57,12 @@ class CoinsFragment : Fragment() {
         fun onCallback(value: ArrayList<CoinRecyclerViewClass>)
     }
 
-    public fun readData(callback: MyCallback) {
-        firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins").get().addOnSuccessListener {
+    fun readData(callback: MyCallback) {
+
+        val coinsReference = firestore.collection("Users").document(userEmail!!).collection("Coins")
+                .document("Collected Coins")
+
+        coinsReference.get().addOnSuccessListener {
 
             val coinMaps = it?.data
             if (coinMaps == null) {
@@ -69,7 +72,16 @@ class CoinsFragment : Fragment() {
                     val coinInfoMap = coinMaps[key] as MutableMap<String, String>
                     //coinInfoMap["currency"]
                     coinsArray.add(CoinRecyclerViewClass(key, coinInfoMap["currency"]!!, coinInfoMap["value"]!!,
-                            resources.getIdentifier(coinInfoMap["currency"]!!.toLowerCase(), "drawable", "uk.ac.ed.inf.coinz"),coinInfoMap["collectedBy"]!!))
+                            resources.getIdentifier(coinInfoMap["currency"]!!.toLowerCase(), "drawable", "uk.ac.ed.inf.coinz")
+                            ,coinInfoMap["sentBy"]!!))
+                }
+
+                //Display No Coins text if there are no coins
+
+                if(coinsArray.isEmpty()){
+                    coins_fragment_nocoins.visibility = View.VISIBLE
+                } else {
+                    coins_fragment_nocoins.visibility = View.GONE
                 }
 
                 callback.onCallback(coinsArray)

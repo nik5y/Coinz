@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.coinz
 
+import android.content.Intent
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -52,17 +53,28 @@ class InteractiveActivity : AppCompatActivity() {
 
         supportFragmentManager.beginTransaction().add(R.id.fragment_container, ShopFragment()).commit()
 
-       // Slidr.attach(this)
+        interactive_go_to_map.setOnClickListener {
 
-
-
-
+            goToMap()
+            overridePendingTransition(R.anim.left_slide_in, R.anim.right_slide_out)
+        }
 
 }
+
+    //for the slide animation if the user was to click back instead of icon.
 
     override fun finish() {
         super.finish()
         overridePendingTransition(R.anim.left_slide_in,R.anim.right_slide_out)
     }
 
+    private fun goToMap() {
+            val intent = Intent(this, MapsActivity::class.java)
+            startActivity(intent)
+        }
+
+    //todo figure out the last fragment used ting
+
 }
+
+

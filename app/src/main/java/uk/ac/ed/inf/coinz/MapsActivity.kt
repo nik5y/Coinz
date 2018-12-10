@@ -141,6 +141,16 @@ class MapsActivity : AppCompatActivity(),
             goToLogin()
         }
 
+
+        //testing
+
+        val string :String = "s_asdasd_nnnn_cccc_fffff_sssa"
+        val res = string.substringAfter("_").substringBefore('_')
+
+       val k = string.replace(res, "hey")
+
+        val i = 1
+
     }
 
 
@@ -429,6 +439,7 @@ class MapsActivity : AppCompatActivity(),
         currValMap.put("currency", featuresCoin[1])
         currValMap.put("value", featuresCoin[2])
         currValMap.put("collectedBy", userEmail!!)
+        currValMap.put("sentBy", "")
 
         val coinMap: MutableMap<String, Any> = mutableMapOf()
         coinMap.put(featuresCoin[0], currValMap)

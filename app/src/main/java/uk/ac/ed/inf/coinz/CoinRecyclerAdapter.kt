@@ -43,8 +43,8 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
         val firestore = FirebaseFirestore.getInstance()
         val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
-        if (email != coin.collectedBy) {
-            holder.coin_recycler_item_collectedBy.text = "From: coin.collectedBy"
+        if (coin.sentBy.isNotEmpty()) {
+            holder.coin_recycler_item_collectedBy.text = "From: ${coin.sentBy}"
             holder.coin_recycler_item_collectedBy.visibility = View.VISIBLE
         }
 
@@ -106,7 +106,6 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
             val coinId = items.get(v.adapterPosition).id
             val coinCurrency = items.get(v.adapterPosition).currency
             val coinValue = items.get(v.adapterPosition).value
-            val iconId = items.get(v.adapterPosition).iconId
 
             //CONVERTING COINS
 
@@ -162,7 +161,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
     fun removeCoinFromWallet(firestore: FirebaseFirestore, email : String, coinId : String, coinCurrency : String, coinValue : String, storeLocation : String) {
 
-        //todo delete coins from collected and add a union to the coins to remove from map
+        //decide whether i want to put the coin in to the sent coins thing
 
         val walletReference = firestore.collection("Users").document(email).collection("Coins")
 
@@ -222,19 +221,52 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
                                     //todo figure out why document[coinId] gives null when the id contains an email
 
-                                    val i = document["lol@lol.com_bea1-6f72-d4ce-b739-a7d4-cd75"]
+                                    //val i = document["lol@lol.com_bea1-6f72-d4ce-b739-a7d4-cd75"]
+                                    //can perhaps have the id changed to have the first few lines as the collected users name.
+                                    //technically A user can collect A unique coin only once. so having the id as that guarantees itll always
+                                    //be unique. i think
 
-                                    val coinMap: MutableMap<String, Any> = mutableMapOf<String, Any>()
-                                    coinMap.put(email + "_" + coinId, document[coinId]!!)
+                                    //yeh
 
-                                    //Send coin to other users database
+                                    //can also have it to start with s_ so that we can check if it starts with that, and if it doesnt, rename
 
-                                    receiverWalletReference.collection("Coins")
-                                            .document("Collected Coins").set(coinMap, SetOptions.merge())
+                                    //this is so that the key would not get abused and get too large. although it is just a string, still abusible.
 
-                                    //Remove coin from current users database and but it to Sent
+                                    val personalDetailsReference = firestore.collection("Users").document(email)
+                                            .collection("Account Information").document("Personal Details")
 
-                                    removeCoinFromWallet(firestore, email, coinId, coinCurrency, coinValue, "Sent Coins Today")
+                                    personalDetailsReference.get().addOnSuccessListener {personalData ->
+
+                                        //Send coin to other users database
+
+                                            //add sent ting to coin sentby
+
+                                        val coinMap: MutableMap<String, Any> = mutableMapOf<String, Any>()
+                                        val map  = document[coinId] as MutableMap<String, Any>
+                                        map.put("sentBy",email)
+
+
+                                        if (coinId.startsWith("s_")){
+                                            //todo this doesnt work if a user gets a coin, sends it, then receives te same coin and send it again
+
+                                            /*val newUsername = personalData["username"] as String
+                                            val oldUsername = coinId.substringAfter("_").substringBefore('_')
+                                            val newId = coinId.replace(oldUsername, newUsername)*/
+
+                                            coinMap.put(coinId, map)
+
+
+                                        } else {
+
+                                            coinMap.put("s_" + personalData["username"] + "_" + coinId, map)
+                                        }
+
+                                        receiverWalletReference.collection("Coins")
+                                                .document("Collected Coins").set(coinMap, SetOptions.merge())
+                                        //Remove coin from current users database and put it to Sent
+                                        removeCoinFromWallet(firestore, email, coinId, coinCurrency, coinValue, "Sent Coins Today")
+
+                                    }
 
                                 }
                             }
@@ -251,3 +283,11 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 //todo 1. allow sending them back and forth between same users?
 //todo 2. allow sending them more than once?
 //todo 3. make a thingy that changes the id in some way. perhaps uses the senders username or smth..
+
+
+//constrain usernames to be some amount of characters long max.
+
+//sent coins should be looked at when deciding upon map right? but the list gerts deleteed anywat.
+
+//list doesnt get deleted when user turns his phone off. a better way wouls be to implement the checker at the server.
+
