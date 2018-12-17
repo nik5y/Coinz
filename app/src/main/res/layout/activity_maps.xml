@@ -32,28 +32,28 @@
         mapbox:mapbox_cameraZoom="15"
         mapbox:mapbox_styleUrl="mapbox://styles/mapbox/streets-v10" />
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@color/colorPrimary"
-        android:elevation="4dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        mapbox:layout_constraintEnd_toEndOf="parent"
-        mapbox:layout_constraintStart_toStartOf="parent"
-        mapbox:layout_constraintTop_toTopOf="parent"
-        mapbox:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     <ImageView
-        android:id="@+id/loglog"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:id="@+id/interactive_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        app:srcCompat="@drawable/interactive_top_bar"
+        mapbox:layout_constraintEnd_toEndOf="parent"
+        mapbox:layout_constraintStart_toStartOf="parent"
+        mapbox:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/maps_go_to_interactive"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
         android:layout_marginTop="8dp"
-        app:srcCompat="@drawable/dolr"
-        mapbox:layout_constraintBottom_toBottomOf="parent"
-        mapbox:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="306dp" />
+        android:layout_marginRight="8dp"
+        app:srcCompat="@drawable/ic_interactive"
+        mapbox:layout_constraintEnd_toEndOf="parent"
+        mapbox:layout_constraintTop_toTopOf="@+id/interactive_top_bar" />
 
 
     <!--    </android.support.constraint.ConstraintLayout>-->

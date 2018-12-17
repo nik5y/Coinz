@@ -91,6 +91,7 @@ class CoinsFragment : Fragment() {
 
     }
 
+
 }
 
 

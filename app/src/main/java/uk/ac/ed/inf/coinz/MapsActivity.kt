@@ -1,4 +1,5 @@
 @file:Suppress("DEPRECATION")
+@file:SuppressLint("LogNotTimber", "SimpleDateFormat")
 
 package uk.ac.ed.inf.coinz
 
@@ -8,17 +9,13 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.location.Location
-import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
-import com.google.gson.Gson
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
@@ -43,17 +40,8 @@ import com.r0adkll.slidr.Slidr
 import com.r0adkll.slidr.model.SlidrConfig
 import com.r0adkll.slidr.model.SlidrPosition
 import kotlinx.android.synthetic.main.activity_maps.*
-import org.joda.time.DateTime
 import org.json.JSONObject
-import java.io.IOException
-import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.SimpleDateFormat
-import java.time.Duration
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -89,13 +77,9 @@ class MapsActivity : AppCompatActivity(),
 
     private var iconId: Int = 0
 
-    public val SHARED_PREFS = "sharedPreferences"
-    public val JSON_MAP = "Map"
-    public val JSON_RATES = "Rates"
-    public val DOWNLOAD_DATE = "Download Date"
-
-
-
+    private val SHARED_PREFS = "sharedPreferences"
+    private val JSON_MAP = "Map"
+    private val DOWNLOAD_DATE = "Download Date"
 
 /*
     private lateinit var drawer : DrawerLayout
@@ -104,7 +88,7 @@ class MapsActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-        setSupportActionBar(toolbar)
+        //setSupportActionBar(toolbar)
 
         if (mAuth.currentUser == null) {
             goToLogin()
@@ -137,19 +121,19 @@ class MapsActivity : AppCompatActivity(),
 
         Slidr.attach(this, config)
 
-        loglog.setOnClickListener {
-            goToLogin()
+        maps_go_to_interactive.setOnClickListener {
+            goToInteractive()
         }
 
 
         //testing
 
-        val string :String = "s_asdasd_nnnn_cccc_fffff_sssa"
+        /*val string :String = "s_asdasd_nnnn_cccc_fffff_sssa"
         val res = string.substringAfter("_").substringBefore('_')
 
        val k = string.replace(res, "hey")
 
-        val i = 1
+        val i = 1*/
 
     }
 
@@ -354,7 +338,7 @@ class MapsActivity : AppCompatActivity(),
 
     //MENU
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+ /*   override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
@@ -362,10 +346,10 @@ class MapsActivity : AppCompatActivity(),
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId) {
-        /*R.id.sign_out_menu -> {
+        *//*R.id.sign_out_menu -> {
                 mAuth.signOut()
                 goToLogin()
-                return true}*/
+                return true}*//*
             R.id.shop_menu -> {
                 goToInteractive()
                 return true
@@ -377,7 +361,7 @@ class MapsActivity : AppCompatActivity(),
         // if(mToggle!!.onOptionsItemSelected(item)){
         // return true
         // }
-    }
+    }*/
 
     @SuppressLint("MissingPermission")
     private fun coinCollect(marker: Marker) {
@@ -409,13 +393,9 @@ class MapsActivity : AppCompatActivity(),
             if (markerPos.distanceTo(currentPos) <= coinCollectRange) {
 
                 marker.remove()
-
                 val coinMap = createCoinMutableMap(marker)
-
                 addCoinToDatabase(coinMap)
-
                 val currVal = getCoinCurrVal(marker)
-
                 Toast.makeText(this@MapsActivity, "Collected ${currVal[0]} of value ${currVal[1].toDouble().format(3)}", Toast.LENGTH_LONG).show()
 
             } else {
@@ -439,11 +419,12 @@ class MapsActivity : AppCompatActivity(),
     private fun createCoinMutableMap(marker: Marker): MutableMap<String, Any> {
         val featuresCoin = marker.title.toString().split(" ")
 
-        val currValMap: MutableMap<String, String> = mutableMapOf<String, String>()
-        currValMap.put("currency", featuresCoin[1])
-        currValMap.put("value", featuresCoin[2])
-        currValMap.put("collectedBy", userEmail!!)
-        currValMap.put("sentBy", "")
+        val currValMap: MutableMap<String, String> = mutableMapOf<String, String>().apply {
+            put("currency", featuresCoin[1])
+            put("value", featuresCoin[2])
+            put("collectedBy", userEmail!!)
+            put("sentBy", "")
+        }
 
         val coinMap: MutableMap<String, Any> = mutableMapOf()
         coinMap.put(featuresCoin[0], currValMap)
@@ -476,7 +457,7 @@ class MapsActivity : AppCompatActivity(),
 
             if(coins!=null){
                 coinsToRemove = coinsToRemove.union(coins as Iterable<String>)
-                val i = 1
+               // val i = 1
             }
 
             coinReference.document("Sent Coins Today").get().addOnSuccessListener {sent ->
@@ -523,7 +504,6 @@ class MapsActivity : AppCompatActivity(),
                         }
 
                         if (!(coinsToRemove.contains(coinId))) {
-
                             map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title(coinId + " " + coinCurrency + " " + coinValue).icon(IconFactory.getInstance(this).fromResource(iconId)))
                         }
                     }
@@ -558,7 +538,7 @@ class MapsActivity : AppCompatActivity(),
             //add(Calendar.DAY_OF_MONTH, 1)
         }*/
 
-        val millisUntilTomorrowStart = millisUntilTomorrowStart()
+        val millisUntilTomorrowStart = Timing().millisUntilTomorrowStart()
 
         /* val today =  DateTime().withTimeAtStartOfDay();
         val tomorrow = today.plusDays(1).withTimeAtStartOfDay()*/
@@ -581,8 +561,7 @@ class MapsActivity : AppCompatActivity(),
         //Timer used here as the map should be recreated at midnight only if the user is actually playing.
         //If the user is not playing, the map will get changed automatically at next launch
 
-        val millisUntilTomorrowStart = millisUntilTomorrowStart()
-
+        val millisUntilTomorrowStart = Timing().millisUntilTomorrowStart()
 
         Timer("Deleting Coins", false).schedule(millisUntilTomorrowStart + 1000 * 60) {
             Log.d(tag, "ReCreating Maps for new Coins")
@@ -605,18 +584,6 @@ class MapsActivity : AppCompatActivity(),
         val intent = Intent(this, MapsActivity::class.java)
         startActivity(intent)
 
-    }
-
-    fun millisUntilTomorrowStart(): Long {
-
-        val now = OffsetDateTime.now(ZoneOffset.UTC)
-        val today = now.toLocalDate()
-        val tomorrow = today.plusDays(1)
-        val tomorrowStart = OffsetDateTime.of(tomorrow, LocalTime.MIN, ZoneOffset.UTC)
-        val d = Duration.between(now, tomorrowStart)
-        val millisUntilTomorrowStart = d.toMillis()
-
-        return millisUntilTomorrowStart
     }
 
     private fun downloadMap() {
@@ -656,6 +623,7 @@ class MapsActivity : AppCompatActivity(),
 
         return sharedPreferences.getString(JSON_MAP, "No Map")
     }
+
 }
 
 

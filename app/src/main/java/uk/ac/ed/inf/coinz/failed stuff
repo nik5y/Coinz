@@ -167,4 +167,20 @@ private fun getHoursUntilTarget(targetHour: Long): Long {
     }
 
 
+/////// MAPS TOOLBAR//////
+
+<android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        mapbox:layout_constraintEnd_toEndOf="parent"
+        mapbox:layout_constraintStart_toStartOf="parent"
+        mapbox:layout_constraintTop_toTopOf="parent"
+        mapbox:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+
+
 

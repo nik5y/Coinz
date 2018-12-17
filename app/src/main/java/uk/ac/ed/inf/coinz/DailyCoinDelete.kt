@@ -12,13 +12,46 @@ class DailyCoinDelete : BroadcastReceiver() {
 
     override fun onReceive(p0: Context?, p1: Intent?) {
 
-        Log.d("Alarm","Deleting Coins at ${Date()}")
+        Log.d("Alarm","Performing Daily Reset at ${Date()}")
 
         val firestore = FirebaseFirestore.getInstance()
         val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
+        val path = firestore.collection("Users").document(email)
 
-        //remove todaysbanked
-        firestore.collection("Users").document(email).collection("Coins").document("Sent Coins Today").delete()
-        firestore.collection("Users").document(email).collection("Coins").document("Banked Coins Today").delete()
+        //Delete Coins solely used for map from Database:
+
+        path.collection("Coins").document("Sent Coins Today").delete().addOnCompleteListener {
+            Log.d("Alarm", "Sent Coins Today Deleted")
+        }.addOnFailureListener {
+            Log.d("Alarm", "Sent Coins Today NOT Deleted")
+        }
+
+        path.collection("Coins").document("Banked Coins Today").delete().addOnCompleteListener {
+            Log.d("Alarm", "Banked Coins Today Deleted")
+        }.addOnFailureListener {
+            Log.d("Alarm", "Banked Coins Today NOT Deleted")
+        }
+
+
+        //Restart Coin Counter:
+
+        path.collection("Account Information").document("Coin Counter")
+                .get().addOnSuccessListener{count->
+                    path.collection("Account Information").document("Coin Counter")
+                            .set(CoinCounter(0))
+                }.addOnCompleteListener {
+                    Log.d("Alarm", "Coin Counter Restarted")
+                }.addOnFailureListener {
+                    Log.d("Alarm", "Coin Counter NOT Restarted")
+                }
+
+
+        //Reset Bonus For map:
+
+        path.collection("Bonuses").document("Coin Currency").update("activated", false)
+
+        path.collection("Bonuses").document("Coin Value").update("activated", false)
+
+        }
+
     }
-}

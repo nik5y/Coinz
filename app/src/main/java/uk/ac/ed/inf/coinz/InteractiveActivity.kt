@@ -59,6 +59,13 @@ class InteractiveActivity : AppCompatActivity() {
             overridePendingTransition(R.anim.left_slide_in, R.anim.right_slide_out)
         }
 
+        interactive_go_to_login.setOnClickListener {
+
+            goToLogin()
+
+            //todo figure out anim
+        }
+
 }
 
     //for the slide animation if the user was to click back instead of icon.
@@ -72,6 +79,12 @@ class InteractiveActivity : AppCompatActivity() {
             val intent = Intent(this, MapsActivity::class.java)
             startActivity(intent)
         }
+
+    private fun goToLogin() {
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+    }
 
     //todo figure out the last fragment used ting
 

@@ -17,6 +17,11 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
+    <!-- Permission for the alarm to be set up on device reboot -->
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -31,7 +36,7 @@
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -41,7 +46,15 @@
         <receiver
             android:name=".DailyCoinDelete"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false">
+        </receiver>
+
+        <receiver android:name=".DailyCoinDeleteOnReboot"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
 
         <activity android:name=".InteractiveActivity"
             android:theme="@style/Theme.MyNoAction">
