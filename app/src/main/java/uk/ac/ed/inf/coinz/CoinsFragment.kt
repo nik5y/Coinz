@@ -73,7 +73,7 @@ class CoinsFragment : Fragment() {
                     //coinInfoMap["currency"]
                     coinsArray.add(CoinRecyclerViewClass(key, coinInfoMap["currency"]!!, coinInfoMap["value"]!!,
                             resources.getIdentifier(coinInfoMap["currency"]!!.toLowerCase(), "drawable", "uk.ac.ed.inf.coinz")
-                            ,coinInfoMap["sentBy"]!!))
+                            ,coinInfoMap["sentBy"]!!, coinInfoMap["collectedBy"]!!))
                 }
 
                 //Display No Coins text if there are no coins
