@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="@color/colorPrimary"
+    android:background="@color/vikaLightOrange"
     android:layout_marginTop="5dp"
     android:padding="5dp"
     android:id="@+id/coin_recycler_item">
@@ -15,6 +15,7 @@
         android:layout_width="60dp"
         android:layout_gravity="center_vertical"
         android:layout_height="60dp"
+        android:layout_marginLeft="5dp"
         android:src="@drawable/peny" />
 
     <android.support.constraint.ConstraintLayout

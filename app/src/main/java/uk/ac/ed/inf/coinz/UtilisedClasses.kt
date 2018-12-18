@@ -38,6 +38,8 @@ class dailyUpdate() : Runnable {
         //set bonus features to false
         firestore.collection("Users").document(email).collection("Bonuses").document("Coin Currency").update("activated", false)
         firestore.collection("Users").document(email).collection("Bonuses").document("Coin Value").update("activated", false)
+        firestore.collection("Users").document(email).collection("Bonuses").document("Range+").update("activated", false)
+
     }
 }
 
@@ -61,3 +63,5 @@ class Timing() {
 
 
 }
+
+fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)

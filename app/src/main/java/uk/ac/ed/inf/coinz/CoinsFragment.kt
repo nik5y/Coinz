@@ -33,7 +33,6 @@ class CoinsFragment : Fragment() {
             recyc.adapter = CoinRecyclerAdapter(context!!, value)
         }
     })
-//todo add go back to map button
 
         return view
 
@@ -47,10 +46,6 @@ class CoinsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        //todo add a text when there are no coin collected. i.e adjust visibility depending on array size
-
-
     }
 
     interface MyCallback {

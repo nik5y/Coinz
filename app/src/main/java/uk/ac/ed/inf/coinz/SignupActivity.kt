@@ -162,6 +162,7 @@ class SignupActivity : AppCompatActivity() {
         val bonusRangeReference = bonusReference.document("Range+")
         val bonusMarkerCurrencyReference = bonusReference.document("Coin Currency")
         val bonusMarkerValueReference = bonusReference.document("Coin Value")
+        val bonusRatesReference = bonusReference.document("Rates")
 
         ///addd bonus features
 
@@ -173,6 +174,7 @@ class SignupActivity : AppCompatActivity() {
             bonusRangeReference.set(Bonus(false))
             bonusMarkerCurrencyReference.set(Bonus(false))
             bonusMarkerValueReference.set(Bonus(false))
+            bonusRatesReference.set(Bonus(false))
 
             //not initialised coins as they get initialised by their own piece of code.
             //not initialised banked and sent coins as their database thingie will be deleted daily,

@@ -35,9 +35,8 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
         val coin: CoinRecyclerViewClass = items[position]
         holder.coin_recycler_currency.text = coin.currency
-        //rounds down
-        //add double format
-        holder.coin_recycler_value.text = coin.value.subSequence(0, 5)
+
+        holder.coin_recycler_value.text = coin.value.toDouble().format(3)
         holder.coin_recycler_image.setImageResource(coin.iconId)
 
         //todo add if for from thing
@@ -368,12 +367,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
 }
 
-
-//todo figure out what to do with coins when sent to other user:
-//todo 1. allow sending them back and forth between same users?
-//todo 2. allow sending them more than once?
-//todo 3. make a thingy that changes the id in some way. perhaps uses the senders username or smth..
-
+//todo delete bloody bonuses after 24 hrs
 
 //constrain usernames to be some amount of characters long max.
 

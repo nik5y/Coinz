@@ -399,6 +399,7 @@ class MapsActivity : AppCompatActivity(),
                 Toast.makeText(this@MapsActivity, "Collected ${currVal[0]} of value ${currVal[1].toDouble().format(3)}", Toast.LENGTH_LONG).show()
 
             } else {
+
                 Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).format(0)}m out of Range!", Toast.LENGTH_LONG).show()
             }
         }
@@ -520,11 +521,6 @@ class MapsActivity : AppCompatActivity(),
              }
         }
     }
-
-
-    //Formatting digits
-    fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
-
 
     //Setting an Alarm to delete coins at midnight
     private fun setDailyCoinDelete() {
