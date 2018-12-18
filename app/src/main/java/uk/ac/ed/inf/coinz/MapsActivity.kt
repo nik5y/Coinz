@@ -5,9 +5,12 @@ package uk.ac.ed.inf.coinz
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.Dialog
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.location.Location
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -40,6 +43,8 @@ import com.r0adkll.slidr.Slidr
 import com.r0adkll.slidr.model.SlidrConfig
 import com.r0adkll.slidr.model.SlidrPosition
 import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.android.synthetic.main.coin_recycler_dialog.*
+import kotlinx.android.synthetic.main.maps_dialog_rates.*
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
@@ -108,6 +113,10 @@ class MapsActivity : AppCompatActivity(),
 
         //locating
 
+        //todo so, come up with ways of restarting bonuses, both offline and if the user is playing currently
+        //todo look at bonuses in maps
+        //perhaps add more bonuses
+        //try messenger
 
         /* drawer = findViewById(R.id.drawer_layout)
 
@@ -123,6 +132,10 @@ class MapsActivity : AppCompatActivity(),
 
         maps_go_to_interactive.setOnClickListener {
             goToInteractive()
+        }
+
+        maps_open_rates_dialog.setOnClickListener {
+            setupDialog(this).show()
         }
 
 
@@ -554,9 +567,6 @@ class MapsActivity : AppCompatActivity(),
 
     fun reCreateMap() {
 
-        //Timer used here as the map should be recreated at midnight only if the user is actually playing.
-        //If the user is not playing, the map will get changed automatically at next launch
-
         val millisUntilTomorrowStart = Timing().millisUntilTomorrowStart()
 
         Timer("Deleting Coins", false).schedule(millisUntilTomorrowStart + 1000 * 60) {
@@ -618,6 +628,23 @@ class MapsActivity : AppCompatActivity(),
         val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
 
         return sharedPreferences.getString(JSON_MAP, "No Map")
+    }
+
+    fun setupDialog(context: Context) : Dialog {
+        val dialog  = Dialog(context)
+        val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+        dialog.setContentView(R.layout.maps_dialog_rates)
+        dialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        dialog.maps_dialog_rates_dolr_title.setText("DOLR")
+        dialog.maps_dialog_rates_dolr_value.setText(sharedPreferences.getString("DOLR", "no rate").toDouble().format(3))
+        dialog.maps_dialog_rates_quid_title.setText("QUID")
+        dialog.maps_dialog_rates_quid_value.setText(sharedPreferences.getString("QUID", "no rate").toDouble().format(3))
+        dialog.maps_dialog_rates_peny_title.setText("PENY")
+        dialog.maps_dialog_rates_peny_value.setText(sharedPreferences.getString("PENY", "no rate").toDouble().format(3))
+        dialog.maps_dialog_rates_shil_title.setText("SHIL")
+        dialog.maps_dialog_rates_shil_value.setText(sharedPreferences.getString("SHIL", "no rate").toDouble().format(3))
+        return dialog
     }
 
 }

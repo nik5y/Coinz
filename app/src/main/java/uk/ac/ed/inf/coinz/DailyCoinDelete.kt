@@ -49,8 +49,8 @@ class DailyCoinDelete : BroadcastReceiver() {
         //Reset Bonus For map:
 
         path.collection("Bonuses").document("Coin Currency").update("activated", false)
-
         path.collection("Bonuses").document("Coin Value").update("activated", false)
+        path.collection("Bonuses").document("Rates").update("activated", false)
 
         }
 

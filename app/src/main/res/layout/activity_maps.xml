@@ -50,10 +50,20 @@
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_marginTop="8dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"
         app:srcCompat="@drawable/ic_interactive"
         mapbox:layout_constraintEnd_toEndOf="parent"
         mapbox:layout_constraintTop_toTopOf="@+id/interactive_top_bar" />
+
+    <ImageView
+        android:id="@+id/maps_open_rates_dialog"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        app:srcCompat="@drawable/ic_settings"
+        mapbox:layout_constraintStart_toStartOf="parent"
+        mapbox:layout_constraintTop_toTopOf="parent" />
 
 
     <!--    </android.support.constraint.ConstraintLayout>-->
