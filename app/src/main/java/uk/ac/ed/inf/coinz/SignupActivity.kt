@@ -171,7 +171,7 @@ class SignupActivity : AppCompatActivity() {
         userReference.document("Personal Details").set(User(username, url)).addOnCompleteListener {
             userReference.document("Gold Balance").set(Bank())
             userReference.document("Coin Counter").set(CoinCounter())
-            bonusRangeReference.set(Bonus(false))
+            bonusRangeReference.set(BonusTimed(false))
             bonusMarkerCurrencyReference.set(Bonus(false))
             bonusMarkerValueReference.set(Bonus(false))
             bonusRatesReference.set(Bonus(false))

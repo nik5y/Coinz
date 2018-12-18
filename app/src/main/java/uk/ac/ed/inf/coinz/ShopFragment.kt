@@ -27,7 +27,7 @@ class ShopFragment : Fragment() {
         slider = view.findViewById<ViewPager>(R.id.shop_pager)
         pageDots = view.findViewById<LinearLayout>(R.id.shop_page_dots)
 
-        slider.adapter = ShopSliderAdapter(view, context!!, firebase, currentUser!!)
+        slider.adapter = ShopSliderAdapter(activity!!, view, context!!, firebase, currentUser!!)
 
         addDots(0)
 
@@ -47,7 +47,7 @@ class ShopFragment : Fragment() {
 
         })
 
-        firebase.collection("Users").document(currentUser!!).collection("Account Information")
+        firebase.collection("Users").document(currentUser).collection("Account Information")
                 .document("Gold Balance").get().addOnSuccessListener {
                     val gold = it["goldBalance"].toString().toDouble()
                     shop_gold_balance.setText(gold.format(2))
@@ -75,8 +75,6 @@ class ShopFragment : Fragment() {
     }
 
     fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
-
-
 
 //todo disable rotation
 

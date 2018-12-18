@@ -21,7 +21,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.android.synthetic.main.coin_recycler_dialog.*
 import kotlinx.android.synthetic.main.coin_recycler_item.view.*
-import java.text.SimpleDateFormat
 import java.util.*
 
 private val tag = "CoinRecyclerAdapter"
@@ -71,7 +70,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
             coinCounterPath.get().addOnSuccessListener { count ->
 
-                if (count.get("initialised") != SimpleDateFormat("yyyy/MM/dd").format(Date())) {
+                if (count.get("initialised") != todayYMD()) {
                     resetCoinCounter(coinCounterPath)
                     bankedCoinCount = count.get("count").toString().toInt()
                     setUpSendingCoin(bankedCoinCount, v)
@@ -109,7 +108,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
             coinCounterPath.get().addOnSuccessListener { count ->
 
-                if (count.get("initialised") != SimpleDateFormat("yyyy/MM/dd").format(Date())) {
+                if (count.get("initialised") != todayYMD()) {
                     resetCoinCounter(coinCounterPath)
                     bankedCoinCount = count.get("count").toString().toInt()
                     addCoinToBank(coinId,coinCurrency,coinValue)
@@ -320,7 +319,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
             //the if check is only for the situation where the user has turned off his phone when the counter restart was supposed to happen.
 
-            if (count.get("initialised").toString() == SimpleDateFormat("yyyy/MM/dd").format(Date())) {
+            if (count.get("initialised").toString() == todayYMD()) {
                 if (!coinId.startsWith("s_")) {
                     val newCount = count.get("count").toString().toInt() + 1
                     coinCounterPath.set(CoinCounter(newCount)).addOnCompleteListener {
@@ -338,7 +337,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
     @SuppressLint("LogNotTimber", "SimpleDateFormat")
     private fun resetCoinCounter(coinCounterPath: DocumentReference) {
         coinCounterPath.run {
-            update("initialised", SimpleDateFormat("yyyy/MM/dd").format(Date()))
+            update("initialised", todayYMD())
             update("count", 0)
         }.addOnCompleteListener {
             d("CoinRecyclerAdapter", "Coin Counter Restarted")

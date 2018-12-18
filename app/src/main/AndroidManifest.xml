@@ -51,6 +51,11 @@
             android:exported="false">
         </receiver>
 
+        <receiver
+            android:name=".TimedBonusReset"
+            android:enabled="true"
+            android:exported="false" />
+
         <receiver android:name=".DailyCoinDeleteOnReboot"
             android:enabled="true">
             <intent-filter>

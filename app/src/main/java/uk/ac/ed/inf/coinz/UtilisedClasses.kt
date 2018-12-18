@@ -3,6 +3,7 @@ package uk.ac.ed.inf.coinz
 import android.annotation.SuppressLint
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.LocalTime
@@ -12,13 +13,15 @@ import java.util.*
 
 class User(var username:String, var pictureURL:String)
 
-class Bonus(var activated: Boolean)
+class Bonus(val activated: Boolean, val updated: String = todayYMD())
 
-class Bank(var goldBalance:Double = 0.0)
+class BonusTimed(val activated: Boolean, val expires : Date =  Date())
+
+class Bank(val goldBalance:Double = 0.0)
 
 class Created(val created : Date = Date())
 
-class CoinCounter(val count : Int = 0, val initialised: String = SimpleDateFormat("yyyy/MM/dd").format(Date()))
+class CoinCounter(val count : Int = 0, val initialised: String = todayYMD())
 
 class Timing() {
 

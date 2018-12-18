@@ -229,7 +229,7 @@ class dailyUpdate() : Runnable {
             path.collection("Account Information").document("Coin Counter")
                     .get().addOnSuccessListener{count->
                         path.collection("Account Information").document("Coin Counter")
-                                .set(CoinCounter(0))
+                                .set(CoinCounter())
                     }.addOnCompleteListener {
                         Log.d("Alarm", "Coin Counter Restarted")
                     }.addOnFailureListener {
