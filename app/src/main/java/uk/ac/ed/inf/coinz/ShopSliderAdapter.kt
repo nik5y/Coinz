@@ -115,6 +115,9 @@ class ShopSliderAdapter(containerView : View, var context: Context, firebase : F
 
                             bonusPath.update("activated", true)
 
+                            //set timer to delete bonus in 24 hours
+
+
 
                         } else {
                             val alert = AlertDialog.Builder(context)

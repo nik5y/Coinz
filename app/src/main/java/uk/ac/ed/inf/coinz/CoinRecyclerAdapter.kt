@@ -29,6 +29,8 @@ private val tag = "CoinRecyclerAdapter"
 class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecyclerViewClass>)
     : RecyclerView.Adapter<CoinRecyclerAdapter.ViewHolder>() {
 
+    val firestore = FirebaseFirestore.getInstance()
+    val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
 
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -39,10 +41,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
         holder.coin_recycler_value.text = coin.value.toDouble().format(3)
         holder.coin_recycler_image.setImageResource(coin.iconId)
 
-        //todo add if for from thing
 
-        val firestore = FirebaseFirestore.getInstance()
-        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
         if (coin.sentBy.isNotEmpty()) {
             holder.coin_recycler_item_collectedBy.text = "From: ${coin.sentBy}"
             holder.coin_recycler_item_collectedBy.visibility = View.VISIBLE
@@ -60,19 +59,11 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
         val v = CoinRecyclerAdapter.ViewHolder(LayoutInflater.from(context)
                 .inflate(R.layout.coin_recycler_item, parent, false))
 
-        /*v.coin_recycler_item.setOnClickListener {
-            println(v.coin_recycler_currency.text)
-        }*/
-
-
-        //
 
         v.coin_recycler_send_coin.setOnClickListener { send ->
 
             //get the coin count
 
-            val firestore = FirebaseFirestore.getInstance()
-            val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
             var bankedCoinCount = 0
 
             val coinCounterPath = firestore.collection("Users").document(email).collection("Account Information")
@@ -108,8 +99,6 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
         v.coin_recycler_bank_coin.setOnClickListener {
 
-            val firestore = FirebaseFirestore.getInstance()
-            val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
             var bankedCoinCount = 0
             val coinId = items.get(v.adapterPosition).id
             val coinCurrency = items.get(v.adapterPosition).currency
@@ -192,8 +181,6 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
     @SuppressLint("LogNotTimber")
     fun addCoinToBank(coinId: String, coinCurrency: String, coinValue: String) {
 
-        val firestore = FirebaseFirestore.getInstance()
-        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
         val bankReference = firestore.collection("Users").document(email).collection("Account Information").document("Gold Balance")
 
         //todo implement coin addition to bank and recycler view update and moving coins to different folders.
@@ -222,8 +209,6 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
     @SuppressLint("LogNotTimber")
     fun removeCoinFromWallet(firestore: FirebaseFirestore, email: String, coinId: String, coinCurrency: String, coinValue: String, storeLocation: String) {
 
-        //decide whether i want to put the coin in to the sent coins thing
-
         val walletReference = firestore.collection("Users").document(email).collection("Coins")
 
         walletReference.document("Collected Coins").get()
@@ -233,6 +218,8 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                         val coinMap: MutableMap<String, Any> = mutableMapOf<String, Any>()
 
                         coinMap.put(coinId, true)
+
+                        //todo decide whether i want to put the coin in to the sent coins thing
 
                         walletReference.document(storeLocation).set(coinMap, SetOptions.merge())
 
@@ -251,12 +238,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
     fun sendCoinToUser(position: Int, coinId: String, coinCurrency: String, coinValue: String, collectedBy : String, dialog: Dialog) {
 
-
         val receiverEmail = dialog.coin_recycler_dialog_enter_email.text.toString().toLowerCase()
-        val firestore = FirebaseFirestore.getInstance()
-        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
-
-        //Get the count of banked coins to see if you have "spare change":
 
         val alert = AlertDialog.Builder(context)
         alert.apply {
@@ -359,17 +341,15 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
             update("initialised", SimpleDateFormat("yyyy/MM/dd").format(Date()))
             update("count", 0)
         }.addOnCompleteListener {
-            d("Alarm", "Coin Counter Restarted")
+            d("CoinRecyclerAdapter", "Coin Counter Restarted")
         }.addOnFailureListener {
-            d("Alarm", "Coin Counter NOT Restarted")
+            d("CoinRecyclerAdapter", "Coin Counter NOT Restarted")
         }
     }
 
 }
 
 //todo delete bloody bonuses after 24 hrs
-
-//constrain usernames to be some amount of characters long max.
 
 //sent coins should be looked at when deciding upon map right? but the list gerts deleteed anywat.
 

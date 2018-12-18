@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
@@ -86,6 +87,7 @@ class MapsActivity : AppCompatActivity(),
     private val JSON_MAP = "Map"
     private val DOWNLOAD_DATE = "Download Date"
 
+    private lateinit var alert : AlertDialog.Builder
 /*
     private lateinit var drawer : DrawerLayout
     private lateinit var mToggle : ActionBarDrawerToggle*/
@@ -99,8 +101,7 @@ class MapsActivity : AppCompatActivity(),
             goToLogin()
         }
 
-        dateCreated =  SimpleDateFormat("yyyy/MM/dd").format(Date())
-
+        dateCreated =  todayYMD()
         setDailyCoinDelete()
 
         userEmail = mAuth.currentUser?.email
@@ -118,14 +119,6 @@ class MapsActivity : AppCompatActivity(),
         //perhaps add more bonuses
         //try messenger
 
-        /* drawer = findViewById(R.id.drawer_layout)
-
-        mToggle = ActionBarDrawerToggle(this, drawer, toolbar,
-                R.string.nav_open, R.string.nav_close)
-
-        drawer.addDrawerListener(mToggle)
-        mToggle.syncState()*/
-
         val config = SlidrConfig.Builder().position(SlidrPosition.RIGHT).build()
 
         Slidr.attach(this, config)
@@ -138,15 +131,12 @@ class MapsActivity : AppCompatActivity(),
             setupDialog(this).show()
         }
 
-
-        //testing
-
-        /*val string :String = "s_asdasd_nnnn_cccc_fffff_sssa"
-        val res = string.substringAfter("_").substringBefore('_')
-
-       val k = string.replace(res, "hey")
-
-        val i = 1*/
+        //initialise alert dialog used throughout
+        alert = AlertDialog.Builder(this)
+        alert.apply {
+            setPositiveButton("OK", null)
+            setCancelable(true)
+        }
 
     }
 
@@ -156,12 +146,7 @@ class MapsActivity : AppCompatActivity(),
         //DOWNLOADING
 
         downloadMap()
-
         val coins = getMap()
-
-        //val date = SimpleDateFormat("yyyy/MM/dd").format(Date())
-        // val mapURL : String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
-        //val coins : String = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
         val coinFeatures: FeatureCollection = FeatureCollection.fromJson(coins)
 
         map = mapboxMap
@@ -246,13 +231,8 @@ class MapsActivity : AppCompatActivity(),
         if (granted) {
             enableLocation()
         } else {
-            // Open dialogue for the user go do sudoku or something
-
-            val alert = AlertDialog.Builder(this)
+            // Open dialogue for the user go do sudoku or something (c) Stephen Gilmore
             alert.apply {
-
-                setPositiveButton("OK", null)
-                setCancelable(true)
                 setMessage("Location Permission Denied. In order to play the game," +
                         " location services have to be turned on!")
                 create().show()
@@ -306,15 +286,13 @@ class MapsActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-        if(dateCreated !=  SimpleDateFormat("yyyy/MM/dd").format(Date())){
+
+        if(dateCreated !=  todayYMD()){
             goToMaps()
+            Log.d(tag, "[onResume] Recreating Map for ${todayYMD()}")
         }
 
         mapView?.onResume()
-
-        //put here so that it triggers if a user decided to yada yada
-        //doesnt work if somebody left their map opened for over 2 midnight, which is unlikely, yet still a fault
-        reCreateMap()
 
     }
 
@@ -379,13 +357,10 @@ class MapsActivity : AppCompatActivity(),
     @SuppressLint("MissingPermission")
     private fun coinCollect(marker: Marker) {
 
-        if (locationEngine == null || locationEngine!!.lastLocation == null) {
-
-            val alert = AlertDialog.Builder(this)
+        if (dateCreated != todayYMD()) {
+            reCreateMap()
+        } else if (locationEngine == null || locationEngine!!.lastLocation == null) {
             alert.apply {
-
-                setPositiveButton("OK", null)
-                setCancelable(true)
                 setMessage("Please wait until your location is found")
                 create().show()
             }
@@ -451,8 +426,6 @@ class MapsActivity : AppCompatActivity(),
         val array : Array<String> = arrayOf(featuresCoin[1],featuresCoin[2])
         return array
     }
-
-    //todo ADD RECEIVED FROM THINGY TO THE COINS
 
     //todo ADD REALTIME LISTENER TO COIN ADDITION
 
@@ -538,15 +511,6 @@ class MapsActivity : AppCompatActivity(),
     //Setting an Alarm to delete coins at midnight
     private fun setDailyCoinDelete() {
 
-        /*val calendar: Calendar = Calendar.getInstance().apply {
-            timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            //add(Calendar.DAY_OF_MONTH, 1)
-        }*/
-
         val millisUntilTomorrowStart = Timing().millisUntilTomorrowStart()
 
         /* val today =  DateTime().withTimeAtStartOfDay();
@@ -567,13 +531,47 @@ class MapsActivity : AppCompatActivity(),
 
     fun reCreateMap() {
 
-        val millisUntilTomorrowStart = Timing().millisUntilTomorrowStart()
+        //Restart Coin Counter:
 
-        Timer("Deleting Coins", false).schedule(millisUntilTomorrowStart + 1000 * 60) {
-            Log.d(tag, "ReCreating Maps for new Coins")
-            goToMaps()
+        val path = firestore.collection("Users").document(userEmail!!)
+
+        path.collection("Account Information").document("Coin Counter")
+                .get().addOnSuccessListener { count ->
+                    path.collection("Account Information").document("Coin Counter")
+                            .set(CoinCounter(0))
+                }.addOnCompleteListener {
+                    Log.d(tag, "[recreateMap] Coin Counter Restarted")
+                }.addOnFailureListener {
+                    Log.d(tag, "[recreateMap] Coin Counter NOT Restarted")
+                }
+
+
+        //Reset Bonus For map:
+
+        path.collection("Bonuses").document("Coin Currency").update("activated", false)
+        path.collection("Bonuses").document("Coin Value").update("activated", false)
+        path.collection("Bonuses").document("Rates").update("activated", false)
+
+        //coin delete in case the user clicks on a coin after midnight but before the alarm has time to delete the coins.
+        //as this method restarts the activity, the alarm would also get reset, thus not deleting the coins as needed.
+
+        path.collection("Coins").document("Sent Coins Today").delete().addOnCompleteListener {
+            Log.d(tag, "[recreateMap] Sent Coins Today Deleted")
+        }.addOnFailureListener {
+            Log.d(tag, "[recreateMap] Sent Coins Today NOT Deleted")
         }
 
+        path.collection("Coins").document("Banked Coins Today").delete().addOnCompleteListener {
+            Log.d(tag, "[recreateMap] Banked Coins Today Deleted")
+        }.addOnFailureListener {
+            Log.d(tag, "[recreateMap] Banked Coins Today NOT Deleted")
+        }
+
+        //RESTART ACTIVITY
+
+        goToMaps()
+
+        Toast.makeText(this, "Restarted Map for ${todayYMD()}", Toast.LENGTH_LONG)
 
     }
 
@@ -589,12 +587,16 @@ class MapsActivity : AppCompatActivity(),
 
         val intent = Intent(this, MapsActivity::class.java)
         startActivity(intent)
+        alert.apply {
+            setMessage("Map for ${todayYMD()} now available! Get collecting!")
+            create().show()
+        }
 
     }
 
     private fun downloadMap() {
 
-        val date: String = SimpleDateFormat("yyyy/MM/dd").format(Date())
+        val date: String = todayYMD()
         val mapURL: String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
         val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
@@ -636,18 +638,20 @@ class MapsActivity : AppCompatActivity(),
         dialog.setContentView(R.layout.maps_dialog_rates)
         dialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-        dialog.maps_dialog_rates_dolr_title.setText("DOLR")
-        dialog.maps_dialog_rates_dolr_value.setText(sharedPreferences.getString("DOLR", "no rate").toDouble().format(3))
-        dialog.maps_dialog_rates_quid_title.setText("QUID")
-        dialog.maps_dialog_rates_quid_value.setText(sharedPreferences.getString("QUID", "no rate").toDouble().format(3))
-        dialog.maps_dialog_rates_peny_title.setText("PENY")
-        dialog.maps_dialog_rates_peny_value.setText(sharedPreferences.getString("PENY", "no rate").toDouble().format(3))
-        dialog.maps_dialog_rates_shil_title.setText("SHIL")
-        dialog.maps_dialog_rates_shil_value.setText(sharedPreferences.getString("SHIL", "no rate").toDouble().format(3))
+            dialog.maps_dialog_rates_dolr_title.setText("DOLR")
+            dialog.maps_dialog_rates_dolr_value.setText(sharedPreferences.getString("DOLR", "no rate").toDouble().format(3))
+            dialog.maps_dialog_rates_quid_title.setText("QUID")
+            dialog.maps_dialog_rates_quid_value.setText(sharedPreferences.getString("QUID", "no rate").toDouble().format(3))
+            dialog.maps_dialog_rates_peny_title.setText("PENY")
+            dialog.maps_dialog_rates_peny_value.setText(sharedPreferences.getString("PENY", "no rate").toDouble().format(3))
+            dialog.maps_dialog_rates_shil_title.setText("SHIL")
+            dialog.maps_dialog_rates_shil_value.setText(sharedPreferences.getString("SHIL", "no rate").toDouble().format(3))
+
         return dialog
     }
-
 }
+
+
 
 
 

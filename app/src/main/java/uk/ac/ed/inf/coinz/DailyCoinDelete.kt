@@ -32,26 +32,6 @@ class DailyCoinDelete : BroadcastReceiver() {
             Log.d("Alarm", "Banked Coins Today NOT Deleted")
         }
 
-
-        //Restart Coin Counter:
-
-        path.collection("Account Information").document("Coin Counter")
-                .get().addOnSuccessListener{count->
-                    path.collection("Account Information").document("Coin Counter")
-                            .set(CoinCounter(0))
-                }.addOnCompleteListener {
-                    Log.d("Alarm", "Coin Counter Restarted")
-                }.addOnFailureListener {
-                    Log.d("Alarm", "Coin Counter NOT Restarted")
-                }
-
-
-        //Reset Bonus For map:
-
-        path.collection("Bonuses").document("Coin Currency").update("activated", false)
-        path.collection("Bonuses").document("Coin Value").update("activated", false)
-        path.collection("Bonuses").document("Rates").update("activated", false)
-
         }
 
     }

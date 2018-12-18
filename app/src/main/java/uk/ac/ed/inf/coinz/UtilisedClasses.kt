@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.coinz
 
+import android.annotation.SuppressLint
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
@@ -33,7 +34,22 @@ class Timing() {
         return millisUntilTomorrowStart
     }
 
-
+    fun timeOfUpcomingMidnight() : Long {
+        val calendar: Calendar = Calendar.getInstance().apply {
+           timeInMillis = System.currentTimeMillis()
+           set(Calendar.HOUR_OF_DAY, 0)
+           set(Calendar.MINUTE, 0)
+           set(Calendar.SECOND, 0)
+           set(Calendar.MILLISECOND, 0)
+           //add(Calendar.DAY_OF_MONTH, 1)
+       }
+        return calendar.timeInMillis
+    }
 }
 
 fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
+
+@SuppressLint("SimpleDateFormat")
+fun todayYMD() : String {
+    return SimpleDateFormat("yyyy/MM/dd").format(Date())
+}
