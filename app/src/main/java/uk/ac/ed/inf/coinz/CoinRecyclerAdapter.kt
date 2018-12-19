@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
@@ -23,9 +22,9 @@ import kotlinx.android.synthetic.main.coin_recycler_dialog.*
 import kotlinx.android.synthetic.main.coin_recycler_item.view.*
 import java.util.*
 
-private val tag = "CoinRecyclerAdapter"
+private const val tag = "CoinRecyclerAdapter"
 
-class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecyclerViewClass>)
+class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<CoinRecyclerViewClass>)
     : RecyclerView.Adapter<CoinRecyclerAdapter.ViewHolder>() {
 
     val firestore = FirebaseFirestore.getInstance()
@@ -35,15 +34,15 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
         val coin: CoinRecyclerViewClass = items[position]
-        holder.coin_recycler_currency.text = coin.currency
+        holder.coinRecyclerCurrency.text = coin.currency
 
-        holder.coin_recycler_value.text = coin.value.toDouble().format(3)
-        holder.coin_recycler_image.setImageResource(coin.iconId)
+        holder.coinRecyclerValue.text = coin.value.toDouble().format(3)
+        holder.coinRecyclerImage.setImageResource(coin.iconId)
 
 
         if (coin.sentBy.isNotEmpty()) {
-            holder.coin_recycler_item_collectedBy.text = "From: ${coin.sentBy}"
-            holder.coin_recycler_item_collectedBy.visibility = View.VISIBLE
+            holder.coinRecyclerItemCollectedBy.text = "From: ${coin.sentBy}"
+            holder.coinRecyclerItemCollectedBy.visibility = View.VISIBLE
         }
 
     }
@@ -59,25 +58,25 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                 .inflate(R.layout.coin_recycler_item, parent, false))
 
 
-        v.coin_recycler_send_coin.setOnClickListener { send ->
+        v.coinRecyclerSendCoin.setOnClickListener { _ ->
 
             //get the coin count
 
-            var bankedCoinCount = 0
+            var bankedCoinCount : Int
 
             val coinCounterPath = firestore.collection("Users").document(email).collection("Account Information")
-                    .document("Coin Counter")
+                    .document("Banked Coin Counter")
 
             coinCounterPath.get().addOnSuccessListener { count ->
 
                 if (count.get("initialised") != todayYMD()) {
                     resetCoinCounter(coinCounterPath)
                     bankedCoinCount = count.get("count").toString().toInt()
-                    setUpSendingCoin(bankedCoinCount, v)
+                    setUpSendingCoin( v)
                 } else {
                     bankedCoinCount = count.get("count").toString().toInt()
                     if (bankedCoinCount >= 25) {
-                        setUpSendingCoin(bankedCoinCount, v)
+                        setUpSendingCoin( v)
                     } else {
                         val alert = AlertDialog.Builder(context)
                         alert.apply {
@@ -96,15 +95,15 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
         //deleting coins
 
-        v.coin_recycler_bank_coin.setOnClickListener {
+        v.coinRecyclerBankCoin.setOnClickListener {
 
-            var bankedCoinCount = 0
-            val coinId = items.get(v.adapterPosition).id
-            val coinCurrency = items.get(v.adapterPosition).currency
-            val coinValue = items.get(v.adapterPosition).value
+            var bankedCoinCount : Int
+            val coinId = items[v.adapterPosition].id
+            val coinCurrency = items[v.adapterPosition].currency
+            val coinValue = items[v.adapterPosition].value
 
             val coinCounterPath = firestore.collection("Users").document(email).collection("Account Information")
-                    .document("Coin Counter")
+                    .document("Banked Coin Counter")
 
             coinCounterPath.get().addOnSuccessListener { count ->
 
@@ -116,7 +115,8 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                     notifyItemRemoved(v.adapterPosition)
                 } else {
                     bankedCoinCount = count.get("count").toString().toInt()
-                    if (bankedCoinCount < 25 || coinId.startsWith("s_")) {
+                    //either below given limit or if it has been sent by somebody (identified by the s_ prefix)
+                    if (bankedCoinCount < 25 || coinId.startsWith("s_"))  {
                             addCoinToBank(coinId, coinCurrency, coinValue)
                             items.removeAt(v.adapterPosition)
                             notifyItemRemoved(v.adapterPosition)
@@ -136,13 +136,13 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
         return v
     }
 
-    fun setUpSendingCoin(bankedCoinCount: Int, v: ViewHolder) {
+    private fun setUpSendingCoin(v: ViewHolder) {
 
-            val coinId = items.get(v.adapterPosition).id
-            val coinCurrency = items.get(v.adapterPosition).currency
-            val coinValue = items.get(v.adapterPosition).value
-            val iconId = items.get(v.adapterPosition).iconId
-            val collectedBy = items.get(v.adapterPosition).collectedBy
+            val coinId = items[v.adapterPosition].id
+            val coinCurrency = items[v.adapterPosition].currency
+            val coinValue = items[v.adapterPosition].value
+            val iconId = items[v.adapterPosition].iconId
+            val collectedBy = items[v.adapterPosition].collectedBy
 
             //SENDING COINS
 
@@ -152,8 +152,8 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
             dialog.setContentView(R.layout.coin_recycler_dialog)
             dialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-            dialog.coin_recycler_dialog_coinValue.setText(coinValue)
-            dialog.coin_recycler_dialog_coin_currency.setText(coinCurrency)
+        dialog.coin_recycler_dialog_coinValue.text = coinValue
+        dialog.coin_recycler_dialog_coin_currency.text = coinCurrency
             dialog.coin_recycler_dialog_image.setImageResource(iconId)
             dialog.show()
 
@@ -164,28 +164,26 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
         }
 
 
-    //todo just a reminder that the map is downloaded locally cause if another user logs in the map will already be donwloaded so thaths nice
+    //todo just a reminder that the map is downloaded locally cause if another user logs in the map will already be downloaded so that's nice
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
-        val coin_recycler_item = view.coin_recycler_item as LinearLayout
-        val coin_recycler_bank_coin = view.coin_recycler_bank_coin as ImageView
-        val coin_recycler_send_coin = view.coin_recycler_send_coin as ImageView
-        val coin_recycler_image = view.coin_recycler_image as ImageView
-        val coin_recycler_currency = view.coin_recycler_currency as TextView
-        val coin_recycler_value = view.coin_recycler_value as TextView
-        val coin_recycler_item_collectedBy = view.coin_recycler_item_collectedBy as TextView
+        val coinRecyclerBankCoin = view.coin_recycler_bank_coin as ImageView
+        val coinRecyclerSendCoin = view.coin_recycler_send_coin as ImageView
+        val coinRecyclerImage = view.coin_recycler_image as ImageView
+        val coinRecyclerCurrency = view.coin_recycler_currency as TextView
+        val coinRecyclerValue = view.coin_recycler_value as TextView
+        val coinRecyclerItemCollectedBy = view.coin_recycler_item_collectedBy as TextView
     }
 
     @SuppressLint("LogNotTimber")
     fun addCoinToBank(coinId: String, coinCurrency: String, coinValue: String) {
 
-        val bankReference = firestore.collection("Users").document(email).collection("Account Information").document("Gold Balance")
-
-        //todo implement coin addition to bank and recycler view update and moving coins to different folders.
+        val bankReference = firestore.collection("Users").document(email)
+                .collection("Account Information").document("Gold Balance")
 
         bankReference.get().addOnSuccessListener {
-            var goldBalance = it.data!!.get("goldBalance") as Double
+            var goldBalance = it.data!!["goldBalance"] as Double
 
 
             val sharedPreferences = context.getSharedPreferences("sharedPreferences", Context.MODE_PRIVATE)
@@ -193,10 +191,10 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
             goldBalance += coinValue.toDouble() * rate.toDouble()
 
-            bankReference.set(Bank(goldBalance)).addOnCompleteListener {
+            bankReference.set(Bank(goldBalance)).addOnCompleteListener { _ ->
                 d(tag, "Coin Successfully Banked!")
                 addToCoinCounter(coinId, email, firestore)
-            }.addOnFailureListener {
+            }.addOnFailureListener { _ ->
                 d(tag, "Coin NOT Banked!")
             }
             removeCoinFromWallet(firestore, email, coinId, coinCurrency, coinValue, "Banked Coins Today")
@@ -214,11 +212,9 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                 .addOnSuccessListener { document ->
                     if (document != null) {
 
-                        val coinMap: MutableMap<String, Any> = mutableMapOf<String, Any>()
+                        val coinMap: MutableMap<String, Any> = mutableMapOf()
 
-                        coinMap.put(coinId, true)
-
-                        //todo decide whether i want to put the coin in to the sent coins thing
+                        coinMap[coinId] = true
 
                         walletReference.document(storeLocation).set(coinMap, SetOptions.merge())
 
@@ -235,7 +231,7 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                 }
     }
 
-    fun sendCoinToUser(position: Int, coinId: String, coinCurrency: String, coinValue: String, collectedBy : String, dialog: Dialog) {
+    private fun sendCoinToUser(position: Int, coinId: String, coinCurrency: String, coinValue: String, collectedBy : String, dialog: Dialog) {
 
         val receiverEmail = dialog.coin_recycler_dialog_enter_email.text.toString().toLowerCase()
 
@@ -245,13 +241,15 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
             setCancelable(true)
             create()
         }
-            if (receiverEmail.isEmpty()) {
-                alert.setMessage("Please enter the email").show()
-            } else if (email == receiverEmail) {
-                alert.setMessage("Sorry, but you can't send coins to yourself").show()
-            } else if (receiverEmail == collectedBy) {
-                alert.setMessage("Sorry, but you can't send a coin to the person that has originally collected it").show()
-            } else {
+        when {
+
+            receiverEmail.isEmpty() -> alert.setMessage("Please enter the email").show()
+
+            email == receiverEmail -> alert.setMessage("Sorry, but you can't send coins to yourself").show()
+
+            receiverEmail == collectedBy -> alert.setMessage("Sorry, but you can't send a coin to the person that has originally collected it").show()
+
+            else -> {
                 val userWalletReference = firestore.collection("Users").document(email).collection("Coins")
                 val receiverWalletReference = firestore.collection("Users").document(receiverEmail)
                 receiverWalletReference.get().addOnSuccessListener {
@@ -262,17 +260,15 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                                 .addOnSuccessListener { document ->
                                     if (document != null) {
 
-                                        //todo figure out why document[coinId] gives null when the id contains an email
-
                                         //can perhaps have the id changed to have the first few lines as the collected users name.
-                                        //technically A user can collect A unique coin only once. so having the id as that guarantees itll always
+                                        //technically A user can collect A unique coin only once. so having the id as that guarantees it'll always
                                         //be unique. i think
 
                                         //yeh
 
-                                        //can also have it to start with s_ so that we can check if it starts with that, and if it doesnt, rename
+                                        //can also have it to start with s_ so that we can check if it starts with that, and if it doesn't, rename
 
-                                        //this is so that the key would not get abused and get too large. although it is just a string, still abusible.
+                                        //this is so that the key would not get abused and get too large. although it is just a string, still possible to abuse.
 
                                         val personalDetailsReference = firestore.collection("Users").document(email)
                                                 .collection("Account Information").document("Personal Details")
@@ -281,14 +277,15 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
                                             //Send coin to other users database
 
-                                            val coinMap: MutableMap<String, Any> = mutableMapOf<String, Any>()
+                                            val coinMap: MutableMap<String, Any> = mutableMapOf()
+                                            @Suppress("UNCHECKED_CAST") //due to the nature of coin storing in database, it is appropriate to suppress the warning
                                             val coinInfoMap = document[coinId] as MutableMap<String, Any>
-                                            coinInfoMap.put("sentBy", email)
+                                            coinInfoMap["sentBy"] = email
 
                                             if (coinId.startsWith("s_")) {
-                                                coinMap.put(coinId, coinInfoMap)
+                                                coinMap[coinId] = coinInfoMap
                                             } else {
-                                                coinMap.put("s_" + personalData["username"] + "_" + coinId, coinInfoMap)
+                                                coinMap["s_" + personalData["username"] + "_" + coinId] = coinInfoMap
                                             }
 
                                             receiverWalletReference.collection("Coins")
@@ -307,13 +304,14 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
                 }
             }
         }
+        }
 
 
     @SuppressLint("LogNotTimber", "SimpleDateFormat")
     private fun addToCoinCounter(coinId : String, email : String, firestore: FirebaseFirestore) {
 
         val coinCounterPath = firestore.collection("Users").document(email).collection("Account Information")
-                .document("Coin Counter")
+                .document("Banked Coin Counter")
 
         coinCounterPath.get().addOnSuccessListener { count ->
 
@@ -321,11 +319,12 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
 
             if (count.get("initialised").toString() == todayYMD()) {
                 if (!coinId.startsWith("s_")) {
+                    //only own coins contribute towards the counter
                     val newCount = count.get("count").toString().toInt() + 1
                     coinCounterPath.set(CoinCounter(newCount)).addOnCompleteListener {
-                        d(tag, "Coin Counter Updated")
+                        d(tag, "Banked Coin Counter Updated")
                     }.addOnFailureListener {
-                        d(tag, "Coin Counter NOT Updated")
+                        d(tag, "Banked Coin Counter NOT Updated")
                     }
                 }
             } else {
@@ -340,17 +339,9 @@ class CoinRecyclerAdapter(var context: Context, val items : ArrayList<CoinRecycl
             update("initialised", todayYMD())
             update("count", 0)
         }.addOnCompleteListener {
-            d("CoinRecyclerAdapter", "Coin Counter Restarted")
+            d("CoinRecyclerAdapter", "Banked Coin Counter Restarted")
         }.addOnFailureListener {
-            d("CoinRecyclerAdapter", "Coin Counter NOT Restarted")
+            d("CoinRecyclerAdapter", "Banked Coin Counter NOT Restarted")
         }
     }
-
 }
-
-//todo delete bloody bonuses after 24 hrs
-
-//sent coins should be looked at when deciding upon map right? but the list gerts deleteed anywat.
-
-//list doesnt get deleted when user turns his phone off. a better way wouls be to implement the checker at the server.
-

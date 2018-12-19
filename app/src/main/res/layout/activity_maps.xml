@@ -12,11 +12,6 @@
     android:fitsSystemWindows="true">
     <!--tools:openDrawer="start"-->
 
-    <!--<android.support.constraint.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">-->
-
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
 
@@ -34,6 +29,7 @@
 
 
     <ImageView
+        android:contentDescription="@string/top_bar_desc"
         android:id="@+id/interactive_top_bar"
         android:layout_width="match_parent"
         android:layout_height="58dp"
@@ -46,36 +42,26 @@
         mapbox:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
+        android:contentDescription="@string/maps_go_to_interactive_desc"
         android:id="@+id/maps_go_to_interactive"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        app:srcCompat="@drawable/ic_interactive"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginEnd="7dp"
+        app:srcCompat="@drawable/ic_interactive2"
         mapbox:layout_constraintEnd_toEndOf="parent"
         mapbox:layout_constraintTop_toTopOf="@+id/interactive_top_bar" />
 
     <ImageView
+        android:contentDescription="@string/maps_open_rates_dialog"
         android:id="@+id/maps_open_rates_dialog"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="8dp"
-        app:srcCompat="@drawable/ic_settings"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="9dp"
+        android:layout_marginStart="9dp"
+        app:srcCompat="@drawable/ic_rates"
         mapbox:layout_constraintStart_toStartOf="parent"
         mapbox:layout_constraintTop_toTopOf="parent" />
-
-
-    <!--    </android.support.constraint.ConstraintLayout>-->
-
-    <!--<android.support.design.widget.NavigationView
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:id="@+id/nav_view"
-        app:headerLayout="@layout/nav_header"
-        app:menu="@menu/drawer_menu"/>-->
-    
 
 </android.support.constraint.ConstraintLayout>
 

@@ -2,12 +2,12 @@
 <android.support.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
 
     <ImageView
+        android:contentDescription="@string/shop_page_icon_desc"
         android:id="@+id/shop_page_icon"
         android:layout_width="161dp"
         android:layout_height="169dp"
@@ -27,7 +27,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="8dp"
-        android:text="Bonus"
+        android:text="@string/bonus"
         android:textSize="26sp"
         android:textStyle="bold"
         android:textAlignment="center"
@@ -41,7 +41,7 @@
         android:layout_height="100dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:text="Bonus Description"
+        android:text="@string/bonus_description"
         android:gravity="center"
         android:textAlignment="center"
         android:textSize="18sp"
@@ -57,8 +57,8 @@
         android:layout_height="50sp"
         android:layout_marginStart="45dp"
         android:layout_marginEnd="45dp"
-        android:background="@color/colorPrimary"
-        android:text="Button"
+        android:background="@drawable/orange_button"
+        android:text=""
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/shop_page_description" />

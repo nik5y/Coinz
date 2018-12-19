@@ -6,7 +6,6 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import kotlinx.android.synthetic.main.activity_interactive.*
 
 
 class GambleFragment : Fragment() {
@@ -15,6 +14,8 @@ class GambleFragment : Fragment() {
     @SuppressLint("ResourceType")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate( R.layout.fragment_gamble, container, false )
+    //todo place bet! so let the user sepcify the amoubnt of gold he can pay and then it might quadruple and all that
+
     }
 
 }

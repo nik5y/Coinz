@@ -79,9 +79,9 @@ class MapsActivity : AppCompatActivity(),
 
     private var iconId: Int = 0
 
-    private val SHARED_PREFS = "sharedPreferences"
-    private val JSON_MAP = "Map"
-    private val DOWNLOAD_DATE = "Download Date"
+    private val sharedPREFS = "sharedPreferences"
+    private val jsonMAP = "Map"
+    private val downloadDATE = "Download Date"
 
     private lateinit var alert : AlertDialog.Builder
 
@@ -115,11 +115,6 @@ class MapsActivity : AppCompatActivity(),
 
         //locating
 
-        //todo so, come up with ways of restarting bonuses, both offline and if the user is playing currently
-        //todo look at bonuses in maps
-        //perhaps add more bonuses
-        //try messenger
-
         val config = SlidrConfig.Builder().position(SlidrPosition.RIGHT).build()
 
         Slidr.attach(this, config)
@@ -146,6 +141,7 @@ class MapsActivity : AppCompatActivity(),
                         }
                     }
         }
+
     }
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
@@ -211,7 +207,7 @@ class MapsActivity : AppCompatActivity(),
             } else {
                 locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
                 locationLayerPlugin?.apply {
-                    setLocationLayerEnabled(true)
+                    isLocationLayerEnabled = true
                     cameraMode = CameraMode.TRACKING
                     renderMode = RenderMode.NORMAL
                 }
@@ -225,7 +221,7 @@ class MapsActivity : AppCompatActivity(),
 
     /// Permissions listener:
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
-        //Present a toast or a dialog explainging why they should provide access
+        //Present a toast or a dialog explaining why they should provide access
         Log.d(tag, "Permissions: $permissionsToExplain")
 
     }
@@ -344,49 +340,75 @@ class MapsActivity : AppCompatActivity(),
 
         } else {
 
-            val lastLocation = locationEngine!!.lastLocation
+            //Checking Levels and the corresponding maximum amount of coins able to collect per day
 
-            val markerPos = marker.position
-            val currentPos = LatLng(lastLocation.latitude, lastLocation.longitude)
+            val userReference = firestore.collection("Users").document(userEmail!!)
 
-            //todo coinrangecollect
+            userReference.collection("Account Information").document("Level")
+                    .get().addOnSuccessListener { level ->
+                userReference.collection("Account Information").document("Collected Coin Counter")
+                        .get().addOnSuccessListener { count ->
 
-            firestore.collection("Users").document(userEmail!!).collection("Bonuses")
-                    .document("Range+").get().addOnSuccessListener {
+                            val allowedCoinsToCollect = LevelingSystem().allowedCoinCollect(level["level"].toString().toInt())
 
-                        if(it["activated"] as Boolean) {
-                            val expiration = it["expires"] as Date
-                            if(expiration <= Date()) {
-                                firestore.collection("Users").document(userEmail!!).collection("Bonuses")
-                                        .document("Range+").update("activated", false)
-                                coinCollectRangeBonus = false
-                            } else {
-                                coinCollectRangeBonus = true
+                            val coinsCollectedToday = count["count"].toString().toInt()
+
+                            if(coinsCollectedToday < allowedCoinsToCollect) {
+
+                                val lastLocation = locationEngine!!.lastLocation
+
+                                val markerPos = marker.position
+                                val currentPos = LatLng(lastLocation.latitude, lastLocation.longitude)
+
+                                userReference.collection("Bonuses")
+                                        .document("Range+").get().addOnSuccessListener {
+
+                                            if(it["activated"] as Boolean) {
+                                                val expiration = it["expires"] as Date
+                                                coinCollectRangeBonus = if(expiration <= Date()) {
+                                                    firestore.collection("Users").document(userEmail!!).collection("Bonuses")
+                                                            .document("Range+").update("activated", false)
+                                                    false
+                                                } else {
+                                                    true
+                                                }
+                                            }
+
+                                        }.addOnCompleteListener {
+
+                                            coinCollectRange = if (coinCollectRangeBonus) {
+                                                250.0
+                                            } else {
+                                                100.0
+                                            }
+
+                                            if (markerPos.distanceTo(currentPos) <= coinCollectRange) {
+
+                                                marker.remove()
+                                                val coinMap = createCoinMutableMap(marker)
+
+                                                addCoinToDatabase(coinMap)
+                                                addToCoinCounter()
+
+                                                val currVal = getCoinCurrVal(marker)
+                                                Toast.makeText(this@MapsActivity, "Collected ${currVal[0]} of value ${currVal[1].toDouble().format(3)}", Toast.LENGTH_LONG).show()
+
+                                            } else {
+
+                                                Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).format(0)}m out of Range!", Toast.LENGTH_LONG).show()
+                                            }
+
+                                        }
+
+                            }
+
+                            else {
+                                alert.setMessage("You have collected the maximum amount of coins for today ($allowedCoinsToCollect)! Level up to collect more!").create().show()
                             }
                         }
+            }
 
-                    }.addOnCompleteListener {
 
-                        coinCollectRange = if (coinCollectRangeBonus) {
-                            250.0
-                        } else {
-                            100.0
-                        }
-
-                        if (markerPos.distanceTo(currentPos) <= coinCollectRange) {
-
-                            marker.remove()
-                            val coinMap = createCoinMutableMap(marker)
-                            addCoinToDatabase(coinMap)
-                            val currVal = getCoinCurrVal(marker)
-                            Toast.makeText(this@MapsActivity, "Collected ${currVal[0]} of value ${currVal[1].toDouble().format(3)}", Toast.LENGTH_LONG).show()
-
-                        } else {
-
-                            Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).format(0)}m out of Range!", Toast.LENGTH_LONG).show()
-                        }
-
-                    }
 
         }
     }
@@ -414,19 +436,15 @@ class MapsActivity : AppCompatActivity(),
         }
 
         val coinMap: MutableMap<String, Any> = mutableMapOf()
-        coinMap.put(featuresCoin[0], currValMap)
+        coinMap[featuresCoin[0]] = currValMap
 
         return coinMap
     }
 
     private fun getCoinCurrVal(marker: Marker) : Array<String> {
         val featuresCoin = marker.title.toString().split(" ")
-        val array : Array<String> = arrayOf(featuresCoin[1],featuresCoin[2])
-        return array
+        return arrayOf(featuresCoin[1],featuresCoin[2])
     }
-
-    //todo ADD REALTIME LISTENER TO COIN ADDITION
-
 
     private fun addCoinsToMap(map: MapboxMap?, coinFeatures: FeatureCollection) {
 
@@ -459,10 +477,10 @@ class MapsActivity : AppCompatActivity(),
 
                     userReference.collection("Bonuses").document("Coin Currency").get().addOnSuccessListener {currencyBonus->
                         currencyMarkerBonus = currencyBonus["activated"] as Boolean
-                    }.addOnCompleteListener {
+                    }.addOnCompleteListener {_->
                         userReference.collection("Bonuses").document("Coin Value").get().addOnSuccessListener {valueBonus ->
                             valueMarkerBonus = valueBonus["activated"] as Boolean
-                        }.addOnCompleteListener {
+                        }.addOnCompleteListener {_->
 
                             for (i in coinFeatures.features()!!) {
 
@@ -475,22 +493,22 @@ class MapsActivity : AppCompatActivity(),
 
                                 //initialise the bonuses
 
-                                if (currencyMarkerBonus) {
+                                iconId = if (currencyMarkerBonus) {
                                     if (valueMarkerBonus) {
-                                        iconId = resources.getIdentifier(coinCurrency.toLowerCase() + coinValue[0], "drawable", packageName)
+                                        resources.getIdentifier(coinCurrency.toLowerCase() + coinValue[0], "drawable", packageName)
                                     } else {
-                                        iconId = resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
+                                        resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
                                     }
                                 } else {
                                     if (valueMarkerBonus) {
-                                        iconId = resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
+                                        resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
                                     } else {
-                                        iconId = resources.getIdentifier("generic_coin", "drawable", packageName)
+                                        resources.getIdentifier("generic_coin", "drawable", packageName)
                                     }
                                 }
 
                                 if (!(coinsToRemove.contains(coinId))) {
-                                    map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title(coinId + " " + coinCurrency + " " + coinValue).icon(IconFactory.getInstance(this).fromResource(iconId)))
+                                    map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title("$coinId $coinCurrency $coinValue").icon(IconFactory.getInstance(this).fromResource(iconId)))
                                 }
                             }
 
@@ -500,14 +518,8 @@ class MapsActivity : AppCompatActivity(),
                         }
                     }
 
-
-
-
-                    //map?.getUiSettings()?.setRotateGesturesEnabled(false)
-                    //map?.getUiSettings()?.setLogoGravity(Gravity.BOTTOM | Gravity.END);
-                    //map?.getUiSettings()?.setLogoEnabled(true);
-                    map?.getUiSettings()?.setAttributionEnabled(false)
-                    map?.getUiSettings()?.setZoomControlsEnabled(true)
+                    map?.uiSettings?.isAttributionEnabled = false
+                    map?.uiSettings?.isZoomControlsEnabled = true
                 }
 
              }
@@ -530,24 +542,35 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
-    fun reCreateMap() {
+    private fun reCreateMap() {
 
         //Restart Coin Counter:
 
         val path = firestore.collection("Users").document(userEmail!!)
 
-        path.collection("Account Information").document("Coin Counter")
-                .get().addOnSuccessListener { count ->
-                    path.collection("Account Information").document("Coin Counter")
+        path.collection("Account Information").document("Banked Coin Counter")
+                .get().addOnSuccessListener { _ ->
+                    path.collection("Account Information").document("Banked Coin Counter")
                             .set(CoinCounter())
                 }.addOnCompleteListener {
-                    Log.d(tag, "[recreateMap] Coin Counter Restarted")
+                    Log.d(tag, "[recreateMap] Banked Coin Counter Restarted")
                 }.addOnFailureListener {
-                    Log.d(tag, "[recreateMap] Coin Counter NOT Restarted")
+                    Log.d(tag, "[recreateMap] Banked Coin Counter NOT Restarted")
                 }
 
 
-        //Reset Bonus For map:
+        path.collection("Account Information").document("Collected Coin Counter")
+                .get().addOnSuccessListener { _ ->
+                    path.collection("Account Information").document("Collected Coin Counter")
+                            .set(CoinCounter())
+                }.addOnCompleteListener {
+                    Log.d(tag, "[recreateMap] Collected Coin Counter Restarted")
+                }.addOnFailureListener {
+                    Log.d(tag, "[recreateMap] Collected Coin Counter NOT Restarted")
+                }
+
+
+        //Reset Bonuses that wear off at midnight:
 
         path.collection("Bonuses").document("Coin Currency").apply {
             update("activated", false)
@@ -585,7 +608,7 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
-    fun goToInteractive() {
+    private fun goToInteractive() {
         val intent = Intent(this, InteractiveActivity::class.java)
 
         startActivity(intent)
@@ -593,7 +616,7 @@ class MapsActivity : AppCompatActivity(),
         overridePendingTransition(R.anim.right_slide_in, R.anim.left_slide_out)
     }
 
-    fun goToMaps() {
+    private fun goToMaps() {
 
         val intent = Intent(this, MapsActivity::class.java)
         startActivity(intent)
@@ -603,21 +626,21 @@ class MapsActivity : AppCompatActivity(),
     private fun downloadMap() {
 
         val date: String = todayYMD()
-        val mapURL: String = "http://homepages.inf.ed.ac.uk/stg/coinz/" + date + "/coinzmap.geojson"
-        val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+        val mapURL = "http://homepages.inf.ed.ac.uk/stg/coinz/$date/coinzmap.geojson"
+        val sharedPreferences = getSharedPreferences(sharedPREFS, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
 
-        if (sharedPreferences.getString(DOWNLOAD_DATE, "dik") != date) {
+        if (sharedPreferences.getString(downloadDATE, "dik") != date) {
             Log.d(tag, "Downloading and storing map for $date")
             val coins  = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
-            editor.putString(DOWNLOAD_DATE, date)
-            editor.putString(JSON_MAP, coins)
+            editor.putString(downloadDATE, date)
+            editor.putString(jsonMAP, coins)
 
             //get rates and put them in shared prefs as well
 
             val rates = JSONObject(coins).get("rates") as JSONObject
-            Log.d(tag, "Storing rates in $SHARED_PREFS")
+            Log.d(tag, "Storing rates in $sharedPREFS")
             for (i in rates.keys()) {
                 val value = rates.get(i).toString()
                 editor.putString(i, value)
@@ -625,7 +648,7 @@ class MapsActivity : AppCompatActivity(),
             editor.apply()
 
         } else {
-            Log.d(tag, "Map for $date already downloaded at $SHARED_PREFS")
+            Log.d(tag, "Map for $date already downloaded at $sharedPREFS")
         }
 
 
@@ -633,28 +656,48 @@ class MapsActivity : AppCompatActivity(),
 
     private fun getMap(): String {
 
-        val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences(sharedPREFS, Context.MODE_PRIVATE)
 
-        return sharedPreferences.getString(JSON_MAP, "No Map")
+        return sharedPreferences.getString(jsonMAP, "No Map")
     }
 
+    @SuppressLint("SetTextI18n")
     fun setupDialog(context: Context) : Dialog {
         val dialog  = Dialog(context)
-        val sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences(sharedPREFS, Context.MODE_PRIVATE)
         dialog.setContentView(R.layout.maps_dialog_rates)
         dialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-            dialog.maps_dialog_rates_dolr_title.setText("DOLR")
-            dialog.maps_dialog_rates_dolr_value.setText(sharedPreferences.getString("DOLR", "no rate").toDouble().format(3))
-            dialog.maps_dialog_rates_quid_title.setText("QUID")
-            dialog.maps_dialog_rates_quid_value.setText(sharedPreferences.getString("QUID", "no rate").toDouble().format(3))
-            dialog.maps_dialog_rates_peny_title.setText("PENY")
-            dialog.maps_dialog_rates_peny_value.setText(sharedPreferences.getString("PENY", "no rate").toDouble().format(3))
-            dialog.maps_dialog_rates_shil_title.setText("SHIL")
-            dialog.maps_dialog_rates_shil_value.setText(sharedPreferences.getString("SHIL", "no rate").toDouble().format(3))
+        dialog.maps_dialog_rates_dolr_title.text = "DOLR"
+        dialog.maps_dialog_rates_dolr_value.text = sharedPreferences.getString("DOLR", "no rate").toDouble().format(3)
+        dialog.maps_dialog_rates_quid_title.text = "QUID"
+        dialog.maps_dialog_rates_quid_value.text = sharedPreferences.getString("QUID", "no rate").toDouble().format(3)
+        dialog.maps_dialog_rates_peny_title.text = "PENY"
+        dialog.maps_dialog_rates_peny_value.text = sharedPreferences.getString("PENY", "no rate").toDouble().format(3)
+        dialog.maps_dialog_rates_shil_title.text = "SHIL"
+        dialog.maps_dialog_rates_shil_value.text = sharedPreferences.getString("SHIL", "no rate").toDouble().format(3)
 
         return dialog
     }
+
+    private fun addToCoinCounter() {
+
+        val coinCounterPath = firestore.collection("Users").document(userEmail!!)
+                .collection("Account Information").document("Collected Coin Counter")
+
+        coinCounterPath.get().addOnSuccessListener { count ->
+
+                val newCount = count.get("count").toString().toInt() + 1
+                coinCounterPath.set(CoinCounter(newCount)).addOnCompleteListener {
+                    Log.d(tag, "Collected Coin Counter Updated")
+                }.addOnFailureListener {
+                    Log.d(tag, "Collected Coin Counter NOT Updated")
+                }
+
+        }
+    }
+
+
 }
 
 // http://m.yandex.kz/collections/card/5b6eb2f9a947cc00c1981068/ coin source//

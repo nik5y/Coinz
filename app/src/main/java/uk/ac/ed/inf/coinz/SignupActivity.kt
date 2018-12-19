@@ -1,5 +1,8 @@
+@file:SuppressLint("LogNotTimber")
+
 package uk.ac.ed.inf.coinz
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -58,12 +61,9 @@ class SignupActivity : AppCompatActivity() {
 
             val imageBmp = MediaStore.Images.Media.getBitmap(contentResolver, profilePicture)
 
-            //registerPicture.setBackgroundDrawable(BitmapDrawable(image_bmp))
-
             registerCircleView.setImageBitmap(imageBmp)
 
             registerPicture.alpha = 0f
-            // registerPicture.visibility= View.GONE
         }
 
     }
@@ -164,20 +164,22 @@ class SignupActivity : AppCompatActivity() {
         val bonusMarkerValueReference = bonusReference.document("Coin Value")
         val bonusRatesReference = bonusReference.document("Rates")
 
-        ///addd bonus features
+        ///add bonus features
 
         firestore.collection("Users").document(email).set(Created())
 
         userReference.document("Personal Details").set(User(username, url)).addOnCompleteListener {
             userReference.document("Gold Balance").set(Bank())
-            userReference.document("Coin Counter").set(CoinCounter())
+            userReference.document("Banked Coin Counter").set(CoinCounter())
+            userReference.document("Collected Coin Counter").set(CoinCounter())
+            userReference.document("Level").set(Level())
             bonusRangeReference.set(BonusTimed(false))
             bonusMarkerCurrencyReference.set(Bonus(false))
             bonusMarkerValueReference.set(Bonus(false))
             bonusRatesReference.set(Bonus(false))
 
             //not initialised coins as they get initialised by their own piece of code.
-            //not initialised banked and sent coins as their database thingie will be deleted daily,
+            //not initialised banked and sent coins as their database thing will be deleted daily,
             //so will be more efficient to just create whenever needed.
 
             Log.d(tag, "User Successfully added to the Database")

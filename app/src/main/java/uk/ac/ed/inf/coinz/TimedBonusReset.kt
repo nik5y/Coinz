@@ -1,5 +1,8 @@
+@file:SuppressLint("LogNotTimber")
+
 package uk.ac.ed.inf.coinz
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -8,9 +11,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 
-class TimedBonusReset() : BroadcastReceiver() {
+class TimedBonusReset : BroadcastReceiver() {
 
-    val tag = "TimedBonusReset"
+    private val tag = "TimedBonusReset"
 
     override fun onReceive(p0: Context?, p1: Intent?) {
 
@@ -26,7 +29,7 @@ class TimedBonusReset() : BroadcastReceiver() {
 
         path.collection("Bonuses").document(bonus).run {
 
-            //if it is not a bonus with an exparation date, update the "updated" field. put activated to false for all
+            //if it is not a bonus with an expiration date, update the "updated" field. put activated to false for all
 
             if (!timed) {
                 update("updated", todayYMD())

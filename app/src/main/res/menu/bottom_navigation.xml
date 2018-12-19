@@ -2,21 +2,29 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
 
-    <group android:checkableBehavior="single">
-    <item
-        android:id="@+id/nav_shop"
-        android:icon="@drawable/ic_shopping_cart_black_24dp"
-        android:title="Shop"/>
+    <group
+        android:id="@+id/bottom_navigation_group"
+        android:checkableBehavior="single">
 
-    <item
-        android:id="@+id/nav_coins"
-        android:icon="@drawable/ic_coin"
-        android:title="Coins"/>
+        <item
+            android:id="@+id/nav_shop"
+            android:icon="@drawable/ic_shopping_cart_black_24dp"
+            android:title="@string/shop" />
 
-    <item
-        android:id="@+id/nav_gamble"
-        android:icon="@drawable/ic_settings"
-        android:title="Gambling"/>
+        <item
+            android:id="@+id/nav_coins"
+            android:icon="@drawable/ic_coin"
+            android:title="@string/coins" />
+
+        <item
+            android:id="@+id/nav_gamble"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/gambling" />
+
+        <item
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/ic_profile"
+            android:title="@string/profile" />
 
     </group>
 

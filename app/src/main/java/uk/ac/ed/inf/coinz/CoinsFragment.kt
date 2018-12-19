@@ -1,4 +1,7 @@
+
+
 package uk.ac.ed.inf.coinz
+
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -12,47 +15,36 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.fragment_coins.*
 
-
 class CoinsFragment : Fragment() {
 
     private val firestore = FirebaseFirestore.getInstance()
     private var mAuth = FirebaseAuth.getInstance()
     private val userEmail = mAuth.currentUser?.email
-    val coinsArray = ArrayList<CoinRecyclerViewClass>()
+    private val coinsArray = ArrayList<CoinRecyclerViewClass>()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         val view = inflater.inflate(R.layout.fragment_coins, container, false)
 
-        val recyc = view.findViewById<RecyclerView>(R.id.recyclerView_Coins) as RecyclerView
+        val recycler = view.findViewById(R.id.recyclerView_Coins) as RecyclerView
 
-        recyc.layoutManager = LinearLayoutManager(activity, LinearLayout.VERTICAL, false)
+        recycler.layoutManager = LinearLayoutManager(activity, LinearLayout.VERTICAL, false)
 
-    readData(object : MyCallback {
-        override fun onCallback(value: ArrayList<CoinRecyclerViewClass>) {
-            recyc.adapter = CoinRecyclerAdapter(context!!, value)
-        }
-    })
+        readData(object : MyCallback {
+            override fun onCallback(value: ArrayList<CoinRecyclerViewClass>) {
+                recycler.adapter = CoinRecyclerAdapter(context!!, value)
+            }
+        })
 
         return view
 
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
     }
 
     interface MyCallback {
         fun onCallback(value: ArrayList<CoinRecyclerViewClass>)
     }
 
-    fun readData(callback: MyCallback) {
+    private fun readData(callback: MyCallback) {
 
         val coinsReference = firestore.collection("Users").document(userEmail!!).collection("Coins")
                 .document("Collected Coins")
@@ -60,10 +52,14 @@ class CoinsFragment : Fragment() {
         coinsReference.get().addOnSuccessListener {
 
             val coinMaps = it?.data
+
+            //necessary check, or else it crashes when empty
+
             if (coinMaps == null) {
                 return@addOnSuccessListener
             } else {
                 for (key in coinMaps.keys) {
+                    @Suppress("UNCHECKED_CAST")//due to the nature of coin storing in database, it is appropriate to suppress warning
                     val coinInfoMap = coinMaps[key] as MutableMap<String, String>
                     //coinInfoMap["currency"]
                     coinsArray.add(CoinRecyclerViewClass(key, coinInfoMap["currency"]!!, coinInfoMap["value"]!!,

@@ -1,5 +1,6 @@
-<resources>
-    <string name="app_name">Coinz</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name"
+        tools:override="true">Coinz</string>
     <string name="access_token">pk.eyJ1IjoibmlrNXkiLCJhIjoiY2pvcTBwZXl2MDAzdzNzbnJyenZrZnlwaSJ9.fR_NvKR6-gPMmTcp1nX5eA</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_login">Sign in</string>
@@ -43,4 +44,29 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="textview">TextView</string>
+    <string name="no_coins_available">No Coins Available</string>
+    <string name="level">Level</string>
+    <string name="gold_balance">Gold Balance</string>
+    <string name="coins_collected_today">Coins Collected Today</string>
+    <string name="coins_banked_today">Coins Banked Today</string>
+    <string name="confirm">Confirm</string>
+    <string name="coin_currency">Coin Currency</string>
+    <string name="coin_value">Coin Value</string>
+    <string name="shop">Shop</string>
+    <string name="coins">Coins</string>
+    <string name="gambling">Gambling</string>
+    <string name="profile">Profile</string>
+    <string name="shop_page_icon_desc">An icon for the bonus feature</string>
+    <string name="bonus">Bonus</string>
+    <string name="bonus_description">Bonus Description</string>
+    <string name="top_bar_desc">An obect used as a toolbar throughout Interactive and Maps activities</string>
+    <string name="interactive_fo_to_map_desc">Icon for button that navigates to Maps from Interactive activities</string>
+    <string name="interactive_go_to_login_desc">Icon for button that signs out the user and navigates to login from interactive activities.</string>
+    <string name="coin_recycler_image_desc">Icon for each item in the recycler view of coins</string>
+    <string name="coin_recycler_bank_coin_desc">Icon for button that banks the coin for each coin in the recycler view</string>
+    <string name="coin_recycler_send_coin_desc">Icon for button in the recycler view of coins that open up a dialog where a user is able to send a coin to another user</string>
+    <string name="maps_go_to_interactive_desc">An icon for the button that navigates from Maps Activity to Interactive Activity</string>
+    <string name="maps_open_rates_dialog">An icon for button that opens a dialog of today\'s rates in Maps Activity</string>
+    <string name="shop_gold_balance_icon_desc">An icon just for aesthetic reasons that resembles a gold coin and is displayed next to total gold balance in the shop fragment in the interactive activity</string>
 </resources>

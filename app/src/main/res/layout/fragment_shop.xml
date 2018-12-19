@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:id="@+id/fragment_shop"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@android:color/holo_blue_light"
+    android:background="@android:color/white"
     >
 
     <android.support.v4.view.ViewPager
@@ -50,7 +50,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:text="Gold Balance"
+        android:text=""
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/shop_pager"
@@ -59,6 +59,7 @@
         app:layout_constraintVertical_bias="0.375" />
 
     <ImageView
+        android:contentDescription="@string/shop_gold_balance_icon_desc"
         android:id="@+id/shop_gold_balance_icon"
         android:layout_width="28dp"
         android:layout_height="28dp"
@@ -69,6 +70,7 @@
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        android:visibility="invisible"
         app:srcCompat="@drawable/peny" />
 
 </android.support.constraint.ConstraintLayout>

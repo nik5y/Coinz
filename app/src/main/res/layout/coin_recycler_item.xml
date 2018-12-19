@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:background="@color/vikaLightOrange"
-    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp"
     android:padding="5dp"
     android:id="@+id/coin_recycler_item">
 
     <ImageView
+        android:contentDescription="@string/coin_recycler_image_desc"
         android:id="@+id/coin_recycler_image"
         android:layout_width="60dp"
         android:layout_gravity="center_vertical"
         android:layout_height="60dp"
-        android:layout_marginLeft="5dp"
+        android:layout_marginStart="5dp"
         android:src="@drawable/peny" />
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="310dp"
         android:layout_height="91dp"
-        android:layout_marginLeft="5dp"
+        android:layout_marginStart="5dp"
         android:orientation="vertical">
 
         <TextView
@@ -32,7 +32,7 @@
             android:layout_alignParentBottom="true"
             android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
-            android:text="Coin Currency"
+            android:text="@string/coin_currency"
             android:textSize="17sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -47,7 +47,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             android:layout_toEndOf="@+id/coin_recycler_bank_coin"
-            android:text="Coin Value"
+            android:text="@string/coin_value"
             android:textSize="17sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -55,6 +55,7 @@
             app:layout_constraintTop_toBottomOf="@+id/coin_recycler_currency" />
 
         <ImageView
+            android:contentDescription="@string/coin_recycler_bank_coin_desc"
             android:id="@+id/coin_recycler_bank_coin"
             android:layout_width="30dp"
             android:layout_height="30dp"
@@ -62,21 +63,23 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
-            android:src="@drawable/ic_coin"
+            android:src="@drawable/ic_bank"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
+            android:contentDescription="@string/coin_recycler_send_coin_desc"
             android:id="@+id/coin_recycler_send_coin"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="12dp"
             android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/coin_recycler_bank_coin"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.511"
             app:srcCompat="@drawable/ic_message" />
 
         <TextView
@@ -85,7 +88,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
-            android:text="TextView"
+            android:text=""
             android:visibility="invisible"
             app:layout_constraintBaseline_toBaselineOf="@+id/coin_recycler_currency"
             app:layout_constraintEnd_toStartOf="@+id/coin_recycler_send_coin"

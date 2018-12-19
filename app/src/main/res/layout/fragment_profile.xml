@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/fragment_profile">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/profile_picture"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/peny" />
+
+    <TextView
+        android:id="@+id/profile_email_header"
+        android:layout_width="wrap_content"
+        android:layout_height="25dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/email"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@+id/profile_email_value"
+        app:layout_constraintEnd_toStartOf="@+id/profile_email_value"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/profile_level_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text="@string/level"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/profile_level_value"
+        app:layout_constraintEnd_toStartOf="@+id/profile_level_value"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/profile_email_header" />
+
+    <TextView
+        android:id="@+id/profile_gold_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text="@string/gold_balance"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/profile_gold_value"
+        app:layout_constraintEnd_toStartOf="@+id/profile_gold_value"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/profile_level_header" />
+
+    <TextView
+        android:id="@+id/profile_email_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="48dp"
+        android:text=""
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/profile_username_value" />
+
+    <TextView
+        android:id="@+id/profile_level_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text=""
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="@+id/profile_email_value"
+        app:layout_constraintTop_toBottomOf="@+id/profile_email_value" />
+
+    <TextView
+        android:id="@+id/profile_gold_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text=""
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="@+id/profile_level_value"
+        app:layout_constraintTop_toBottomOf="@+id/profile_level_value" />
+
+    <TextView
+        android:id="@+id/profile_collected_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text="@string/coins_collected_today"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/profile_collected_value"
+        app:layout_constraintEnd_toStartOf="@+id/profile_collected_value"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/profile_gold_header" />
+
+    <TextView
+        android:id="@+id/profile_banked_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text="@string/coins_banked_today"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/profile_banked_value"
+        app:layout_constraintEnd_toStartOf="@+id/profile_banked_value"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/profile_collected_header" />
+
+    <TextView
+        android:id="@+id/profile_collected_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text=""
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="@+id/profile_gold_value"
+        app:layout_constraintTop_toBottomOf="@+id/profile_gold_value" />
+
+    <TextView
+        android:id="@+id/profile_banked_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text=""
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="@+id/profile_collected_value"
+        app:layout_constraintTop_toBottomOf="@+id/profile_collected_value" />
+
+    <Button
+        android:id="@+id/profile_levelup"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text=""
+        android:textSize="16sp"
+        android:background="@drawable/orange_button"
+        app:layout_constraintEnd_toEndOf="@+id/profile_banked_value"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/profile_banked_header"
+        app:layout_constraintTop_toBottomOf="@+id/profile_banked_header" />
+
+    <TextView
+        android:id="@+id/profile_username_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text=""
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@+id/profile_picture"
+        app:layout_constraintHorizontal_bias="0.488"
+        app:layout_constraintStart_toStartOf="@+id/profile_picture"
+        app:layout_constraintTop_toBottomOf="@+id/profile_picture_confirm" />
+
+    <Button
+        android:id="@+id/profile_picture_confirm"
+        android:layout_width="104dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/confirm"
+        android:textSize="16sp"
+        android:visibility="gone"
+        android:background="@drawable/orange_button"
+        app:layout_constraintEnd_toEndOf="@+id/profile_picture"
+        app:layout_constraintStart_toStartOf="@+id/profile_picture"
+        app:layout_constraintTop_toBottomOf="@+id/profile_picture" />
+</android.support.constraint.ConstraintLayout>

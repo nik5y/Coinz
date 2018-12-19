@@ -23,13 +23,14 @@
 
 
     <application
+        android:fullBackupContent="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar">
-        <activity android:name=".MainActivity" />
+
         <activity
             android:name=".MapsActivity"
             android:label="@string/app_name"
@@ -40,10 +41,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginActivity">
 
+        <activity android:name=".LoginActivity"
+            android:screenOrientation="portrait">
         </activity>
-        <activity android:name=".SignupActivity" />
+
+        <activity android:name=".SignupActivity"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <activity android:name=".InteractiveActivity"
+            android:theme="@style/Theme.MyNoAction"
+            android:screenOrientation="portrait">
+        </activity>
 
         <receiver
             android:name=".DailyCoinDelete"
@@ -62,10 +72,6 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
-
-        <activity android:name=".InteractiveActivity"
-            android:theme="@style/Theme.MyNoAction">
-        </activity>
 
     </application>
 

@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.coinz
 
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Intent
@@ -8,9 +9,10 @@ import android.content.Context
 import android.util.Log
 import java.util.*
 
-
+@SuppressLint("LogNotTimber")
 class DailyCoinDeleteOnReboot : BroadcastReceiver() {
 
+    @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context?, intent: Intent) {
 
             val alarmIntent = Intent(context, DailyCoinDelete::class.java)

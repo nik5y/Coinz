@@ -7,7 +7,7 @@
 
     <color name="mapboxWhite">#ffffff</color>
     <color name="mapboxBlue">#000000</color>
-    <color name="mapboxGrayLight">#c6d2e1</color>
+    <color name="mapboxGrayLight">#dedfe1</color>
 
     <color name="vikaLightOrange">#ffe175</color>
     <color name="vikaDarkOrange">#ffd73d</color>

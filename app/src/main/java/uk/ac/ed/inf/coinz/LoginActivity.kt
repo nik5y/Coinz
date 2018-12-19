@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.coinz
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -9,6 +10,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_login.*
 //
 //
+@SuppressLint("LogNotTimber")
 class LoginActivity : AppCompatActivity() {
 
     private val tag = "LoginActivity"
@@ -30,7 +32,7 @@ class LoginActivity : AppCompatActivity() {
 
     //Go to SignUp
     private fun goToSignup() {
-        val intent : Intent = Intent(this, SignupActivity::class.java)
+        val intent = Intent(this, SignupActivity::class.java)
         startActivity(intent)
     }
 

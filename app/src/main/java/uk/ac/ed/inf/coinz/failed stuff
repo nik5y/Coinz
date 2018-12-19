@@ -222,7 +222,7 @@ class dailyUpdate() : Runnable {
 
             //reset bonuses?
 
-            //Restart Coin Counter:
+            //Restart Banked Coin Counter:
 
             val path = firestore.collection("Users").document(userEmail!!)
 
@@ -263,5 +263,105 @@ class dailyUpdate() : Runnable {
         }
 
     }
+
+
+    /////////LEADERBOARD FRAGMENT////////
+    package uk.ac.ed.inf.coinz
+
+    import android.annotation.SuppressLint
+    import android.os.Bundle
+    import android.support.v4.app.Fragment
+    import android.support.v7.widget.LinearLayoutManager
+    import android.support.v7.widget.RecyclerView
+    import android.view.LayoutInflater
+    import android.view.View
+    import android.view.ViewGroup
+    import android.widget.LinearLayout
+    import com.google.firebase.auth.FirebaseAuth
+    import com.google.firebase.firestore.FirebaseFirestore
+    import com.xwray.groupie.GroupAdapter
+    import com.xwray.groupie.ViewHolder
+    import kotlinx.android.synthetic.main.activity_interactive.*
+    import kotlinx.android.synthetic.main.fragment_leaderboard.*
+
+
+    class LeaderboardFragment : Fragment() {
+
+        val firestore = FirebaseFirestore.getInstance()
+        val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
+        val leaderboardAdapter = GroupAdapter<ViewHolder>()
+        var emailss = arrayListOf<String>("t1@t1.com", "t2@t2.com")
+
+        @SuppressLint("ResourceType")
+        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+            val view = inflater.inflate( R.layout.fragment_leaderboard, container, false )
+
+
+            val recyc = view.findViewById<RecyclerView>(R.id.leaderboard_recycler) as RecyclerView
+
+            recyc.layoutManager = LinearLayoutManager(activity, LinearLayout.VERTICAL, false)
+
+
+            getAdapter(object : MyCallback {
+
+                override fun onCallback(value: GroupAdapter<ViewHolder>) {
+                    recyc.adapter = value
+                }
+            })
+
+
+
+            return view
+        }
+
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+
+
+        }
+
+        interface MyCallback {
+            fun onCallback(value: GroupAdapter<ViewHolder>)
+        }
+
+        private fun getAdapter(callback: MyCallback) {
+
+
+               for (user in emailss) {
+
+                    firestore.collection("Users").document("t1@t1.com").collection("Account Information")
+                            .document("Personal Details").get().addOnSuccessListener { details->
+
+                                val username = details["username"] as String
+                                val pictureURL = details["pictureURL"] as String
+                                leaderboardAdapter.add(LeaderboardUserItem(User(username,pictureURL)))
+                                callback.onCallback(leaderboardAdapter)
+                            }
+
+               }
+
+
+
+            }
+
+
+
+        /*private fun getEmails(callback: MyCallback) {
+            val emails = arrayListOf<String>()
+            firestore.collection("Users").get().addOnSuccessListener { users ->
+
+                for (user in users) {
+                    val userEmail = user.id
+                    emails.add(userEmail)
+                }
+            }
+            callback.onCallbackEmails(emails)
+        }*/
+
+    }
+
+
+
 
 

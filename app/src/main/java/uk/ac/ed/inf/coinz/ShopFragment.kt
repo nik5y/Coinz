@@ -13,19 +13,20 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.fragment_shop.*
 
+@Suppress("DEPRECATION")
 class ShopFragment : Fragment() {
 
-    var dots : ArrayList<TextView> = arrayListOf()
-    lateinit var pageDots : LinearLayout
-    lateinit var slider : ViewPager
-    val firebase = FirebaseFirestore.getInstance()
-    val currentUser = FirebaseAuth.getInstance().currentUser!!.email
+    private var dots : ArrayList<TextView> = arrayListOf()
+    private lateinit var pageDots : LinearLayout
+    private lateinit var slider : ViewPager
+    private val firebase = FirebaseFirestore.getInstance()
+    private val currentUser = FirebaseAuth.getInstance().currentUser!!.email
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_shop, container, false)
 
-        slider = view.findViewById<ViewPager>(R.id.shop_pager)
-        pageDots = view.findViewById<LinearLayout>(R.id.shop_page_dots)
+        slider = view.findViewById(R.id.shop_pager)
+        pageDots = view.findViewById(R.id.shop_page_dots)
 
         slider.adapter = ShopSliderAdapter(activity!!, view, context!!, firebase, currentUser!!)
 
@@ -49,8 +50,14 @@ class ShopFragment : Fragment() {
 
         firebase.collection("Users").document(currentUser).collection("Account Information")
                 .document("Gold Balance").get().addOnSuccessListener {
-                    val gold = it["goldBalance"].toString().toDouble()
-                    shop_gold_balance.setText(gold.format(2))
+                    val goldBalance = it["goldBalance"].toString().toDouble().format(3)
+                    if (goldBalance == "0.000") {
+                        shop_gold_balance.text = "0" //for prettiness
+                    } else {
+                        shop_gold_balance.text = goldBalance
+                    }
+                    //make the display visible
+                    shop_gold_balance_icon.visibility = View.VISIBLE
                 }
 
         return view
@@ -60,22 +67,14 @@ class ShopFragment : Fragment() {
     private fun addDots(position: Int) {
         for (i in 0..3) {
             dots.add(i,TextView(context!!))
-            dots[i].setText(Html.fromHtml("&#8226", Html.FROM_HTML_MODE_LEGACY))
-            dots[i].setTextSize(30.0F)
+            dots[i].text = Html.fromHtml("&#8226", Html.FROM_HTML_MODE_LEGACY)
+            dots[i].textSize = 30.0F
             pageDots.addView(dots[i])
 
         }
 
-        dots[position].setTextColor(resources.getColor(R.color.mapboxWhite))
+        dots[position].setTextColor(resources.getColor(R.color.mapboxGrayLight))
 
     }
-
-    private fun highlightDot(position: Int){
-
-    }
-
-    fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
-
-//todo disable rotation
 
 }
