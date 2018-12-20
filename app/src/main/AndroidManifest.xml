@@ -18,7 +18,6 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <!-- Permission for the alarm to be set up on device reboot -->
-
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
 

@@ -10,7 +10,6 @@
     tools:context=".MapsActivity"
     android:id="@+id/drawer_layout"
     android:fitsSystemWindows="true">
-    <!--tools:openDrawer="start"-->
 
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"

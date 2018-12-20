@@ -14,6 +14,7 @@ import android.graphics.drawable.ColorDrawable
 import android.location.Location
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.annotation.VisibleForTesting
 import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.widget.Toast
@@ -46,7 +47,6 @@ import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.maps_dialog_rates.*
 import org.json.JSONObject
 import java.util.*
-
 
 
 class MapsActivity : AppCompatActivity(),
@@ -126,22 +126,17 @@ class MapsActivity : AppCompatActivity(),
         maps_open_rates_dialog.setOnClickListener {
 
             firestore.collection("Users").document(userEmail!!).collection("Bonuses")
-                    .document("Rates").get().addOnSuccessListener {ratesBonus->
-                        val updatedDate = ratesBonus["updated"] as String
+                    .document("Rates").get().addOnSuccessListener { ratesBonus ->
 
-                        if (updatedDate != dateCreated){
-                            reCreateMap()
+                        rateDialogBonus = ratesBonus["activated"] as Boolean
+                        if (rateDialogBonus) {
+                            setupDialog(this).show()
                         } else {
-                            rateDialogBonus = ratesBonus["activated"] as Boolean
-                            if (rateDialogBonus){
-                                setupDialog(this).show()
-                            } else {
-                                alert.setMessage("Rate List unavailable! Buy the Bonus!").create().show()
-                            }
+                            alert.setMessage("Rate List unavailable! Buy the Bonus!").create().show()
                         }
                     }
-        }
 
+        }
     }
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
@@ -268,7 +263,7 @@ class MapsActivity : AppCompatActivity(),
         startActivity(intent)
     }
 
-    //Lifecycle ting:----------------------------------------
+    //<LIFECYCLES>
 
 
     @SuppressWarnings("MissingPermission")
@@ -288,7 +283,7 @@ class MapsActivity : AppCompatActivity(),
         super.onResume()
 
         if(dateCreated !=  todayYMD()){
-            goToMaps()
+            reCreateMap()
             Log.d(tag, "[onResume] Recreating Map for ${todayYMD()}")
         }
 
@@ -327,8 +322,11 @@ class MapsActivity : AppCompatActivity(),
         mapView?.onLowMemory()
     }
 
+    //</LIFECYCLES>
+
     @SuppressLint("MissingPermission")
-    private fun coinCollect(marker: Marker) {
+    @VisibleForTesting
+    fun coinCollect(marker: Marker) {
 
         if (dateCreated != todayYMD()) {
             reCreateMap()
@@ -353,12 +351,17 @@ class MapsActivity : AppCompatActivity(),
 
                             val coinsCollectedToday = count["count"].toString().toInt()
 
+                            //Checks to see if the user is still allowed to collect coins today
+
                             if(coinsCollectedToday < allowedCoinsToCollect) {
 
-                                val lastLocation = locationEngine!!.lastLocation
+                                //Take note of current position and markers position
 
+                                val lastLocation = locationEngine!!.lastLocation
                                 val markerPos = marker.position
                                 val currentPos = LatLng(lastLocation.latitude, lastLocation.longitude)
+
+                                //Check to see if the augmented range bonus is activated
 
                                 userReference.collection("Bonuses")
                                         .document("Range+").get().addOnSuccessListener {
@@ -376,11 +379,15 @@ class MapsActivity : AppCompatActivity(),
 
                                         }.addOnCompleteListener {
 
+                                            //If activated, augment range, if not, set to default
+
                                             coinCollectRange = if (coinCollectRangeBonus) {
                                                 250.0
                                             } else {
                                                 100.0
                                             }
+
+                                            //If in range, remove from map, store in database, and add to collected counter
 
                                             if (markerPos.distanceTo(currentPos) <= coinCollectRange) {
 
@@ -394,12 +401,9 @@ class MapsActivity : AppCompatActivity(),
                                                 Toast.makeText(this@MapsActivity, "Collected ${currVal[0]} of value ${currVal[1].toDouble().format(3)}", Toast.LENGTH_LONG).show()
 
                                             } else {
-
                                                 Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).format(0)}m out of Range!", Toast.LENGTH_LONG).show()
                                             }
-
                                         }
-
                             }
 
                             else {
@@ -413,6 +417,9 @@ class MapsActivity : AppCompatActivity(),
         }
     }
 
+    //Adds coin to the database that is represented as a nested mutable map
+
+
     private fun addCoinToDatabase(coin: MutableMap<String, Any>) {
 
         val coinReference = firestore.collection("Users").document(userEmail!!).collection("Coins").document("Collected Coins")
@@ -424,6 +431,8 @@ class MapsActivity : AppCompatActivity(),
         }
 
     }
+
+    //Creates a nested mutable map for coins using the information stored in the marker
 
     private fun createCoinMutableMap(marker: Marker): MutableMap<String, Any> {
         val featuresCoin = marker.title.toString().split(" ")
@@ -441,18 +450,30 @@ class MapsActivity : AppCompatActivity(),
         return coinMap
     }
 
+    //Retrieves information about the coin that is manually stored in the marker's title
+
     private fun getCoinCurrVal(marker: Marker) : Array<String> {
         val featuresCoin = marker.title.toString().split(" ")
         return arrayOf(featuresCoin[1],featuresCoin[2])
     }
 
+    /**
+     * Adds markers (coins) to the map. Checks over Collected, Sent and Banked Coin Databases in order for the coin to
+     * not reappear on the map, once it has been collected/sent/banked.
+     * Additionally, checks over the Bonuses that affect marker appearance, to see if they are activated.
+     * Depending on the combination of bonuses (or their absence) the icons for each coin will change accordingly
+     */
+
     private fun addCoinsToMap(map: MapboxMap?, coinFeatures: FeatureCollection) {
 
         val userReference = firestore.collection("Users").document(userEmail!!)
-
         val coinReference = userReference.collection("Coins")
 
+        //Initialises an Iterable to store the IDs of the coins that are not supposed to be shown on the map anymore
+
         var coinsToRemove : Iterable<String> = mutableListOf()
+
+        //Checks over Collected, Sent, Banked Databases and adds the coins to the Iterable
 
         coinReference.document("Collected Coins").get().addOnSuccessListener {collected ->
 
@@ -475,6 +496,8 @@ class MapsActivity : AppCompatActivity(),
                         coinsToRemove= coinsToRemove.union(coins as Iterable<String>)
                     }
 
+                    //Check over Bonuses affecting marker appearance.
+
                     userReference.collection("Bonuses").document("Coin Currency").get().addOnSuccessListener {currencyBonus->
                         currencyMarkerBonus = currencyBonus["activated"] as Boolean
                     }.addOnCompleteListener {_->
@@ -482,38 +505,39 @@ class MapsActivity : AppCompatActivity(),
                             valueMarkerBonus = valueBonus["activated"] as Boolean
                         }.addOnCompleteListener {_->
 
+                            //Loop over all features (coins) in the provided feature collection of the json map and tetrieve information about the coins
+
                             for (i in coinFeatures.features()!!) {
 
                                 val geometry = i.geometry() as Point
                                 val point = geometry.coordinates()
-                                // val tit = i.getStringProperty("id")
                                 val coinCurrency = i.getStringProperty("currency")
                                 val coinId = i.getStringProperty("id")
                                 val coinValue = i.getStringProperty("value")
 
-                                //initialise the bonuses
-
-                                iconId = if (currencyMarkerBonus) {
-                                    if (valueMarkerBonus) {
-                                        resources.getIdentifier(coinCurrency.toLowerCase() + coinValue[0], "drawable", packageName)
-                                    } else {
-                                        resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
-                                    }
-                                } else {
-                                    if (valueMarkerBonus) {
-                                        resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
-                                    } else {
-                                        resources.getIdentifier("generic_coin", "drawable", packageName)
-                                    }
-                                }
+                                //Depending on different combination of marker appearance bonuses, assign different icons to them
 
                                 if (!(coinsToRemove.contains(coinId))) {
+
+                                    iconId = if (currencyMarkerBonus) {
+                                        if (valueMarkerBonus) {
+                                            resources.getIdentifier(coinCurrency.toLowerCase() + coinValue[0], "drawable", packageName)
+                                        } else {
+                                            resources.getIdentifier(coinCurrency.toLowerCase(), "drawable", packageName)
+                                        }
+                                    } else {
+                                        if (valueMarkerBonus) {
+                                            resources.getIdentifier("generic_coin" + coinValue[0], "drawable", packageName)
+                                        } else {
+                                            resources.getIdentifier("generic_coin", "drawable", packageName)
+                                        }
+                                    }
+
                                     map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title("$coinId $coinCurrency $coinValue").icon(IconFactory.getInstance(this).fromResource(iconId)))
                                 }
                             }
 
                             Log.d(tag, "Added Coins to Map")
-
 
                         }
                     }
@@ -528,7 +552,8 @@ class MapsActivity : AppCompatActivity(),
 
     //Setting an Alarm to delete coins at midnight
 
-    private fun setDailyCoinDelete() {
+    @VisibleForTesting
+    fun setDailyCoinDelete() {
 
         val millisUntilTomorrowStart = Timing().millisUntilTomorrowStart()
         val alarmMan = getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -600,6 +625,10 @@ class MapsActivity : AppCompatActivity(),
             Log.d(tag, "[recreateMap] Banked Coins Today NOT Deleted")
         }
 
+        //UPDATE DATE CREATED VARIABLE
+
+        dateCreated = todayYMD()
+
         //RESTART ACTIVITY
 
         goToMaps()
@@ -631,7 +660,7 @@ class MapsActivity : AppCompatActivity(),
         val editor = sharedPreferences.edit()
 
 
-        if (sharedPreferences.getString(downloadDATE, "dik") != date) {
+        if (sharedPreferences.getString(downloadDATE, "default") != date) {
             Log.d(tag, "Downloading and storing map for $date")
             val coins  = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
             editor.putString(downloadDATE, date)
@@ -697,6 +726,10 @@ class MapsActivity : AppCompatActivity(),
         }
     }
 
+    @VisibleForTesting
+    fun provideMapboxMapForTesting() : MapboxMap? {
+        return map
+    }
 
 }
 

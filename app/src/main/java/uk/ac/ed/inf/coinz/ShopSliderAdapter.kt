@@ -38,7 +38,7 @@ class ShopSliderAdapter(private val activity: FragmentActivity, private val cont
     }
 
     private val bonusIcons : Array<Int> = arrayOf(
-          //  R.drawable.dolr7,
+
             R.drawable.shil0,
             R.drawable.shil,
             R.drawable.generic_coin,
@@ -46,7 +46,7 @@ class ShopSliderAdapter(private val activity: FragmentActivity, private val cont
 
 
     private val bonusTitles : Array<String> = arrayOf(
-            //"Level Up",
+
             "Coin Currency",
             "Coin Value",
             "Range+",
@@ -54,12 +54,11 @@ class ShopSliderAdapter(private val activity: FragmentActivity, private val cont
     )
 
     private val bonusPrices : Array<Double> = arrayOf(
-           // 0.0,  // this is ignored for level up
+
             400.0,400.0,500.0,200.0
     )
 
     private val bonusDescriptions : Array<String> = arrayOf(
-            "Level Up in order to collect more coins",
             "Colour coins according to their currency! Lasts until the end of the day.",
             "Display the coin value! Lasts until the end of the day",
             "Double coin collection range! Lasts 24 hours",
@@ -67,7 +66,7 @@ class ShopSliderAdapter(private val activity: FragmentActivity, private val cont
     )
 
     private val bonusTimed : Array<Boolean> = arrayOf(
-            //false, //ignored for level up
+
             false,
             false,
             true,

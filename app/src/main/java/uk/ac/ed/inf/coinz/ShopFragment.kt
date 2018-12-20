@@ -7,6 +7,7 @@ import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.firebase.auth.FirebaseAuth
@@ -19,14 +20,19 @@ class ShopFragment : Fragment() {
     private var dots : ArrayList<TextView> = arrayListOf()
     private lateinit var pageDots : LinearLayout
     private lateinit var slider : ViewPager
+    private lateinit var prevButton : Button
+    private lateinit var nextButton : Button
     private val firebase = FirebaseFirestore.getInstance()
     private val currentUser = FirebaseAuth.getInstance().currentUser!!.email
+    private var currentPage = 0
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_shop, container, false)
 
         slider = view.findViewById(R.id.shop_pager)
         pageDots = view.findViewById(R.id.shop_page_dots)
+        prevButton = view.findViewById(R.id.shop_page_back_button)
+        nextButton = view.findViewById(R.id.shop_page_next_button)
 
         slider.adapter = ShopSliderAdapter(activity!!, view, context!!, firebase, currentUser!!)
 
@@ -44,6 +50,21 @@ class ShopFragment : Fragment() {
             override fun onPageSelected(position: Int) {
                 pageDots.removeAllViewsInLayout()
                 addDots(position)
+
+
+                currentPage = position
+
+                if(position == 0){
+                    nextButton.visibility = View.VISIBLE
+                    prevButton.visibility = View.INVISIBLE
+                } else if(currentPage < 3) {
+                    nextButton.visibility = View.VISIBLE
+                    prevButton.visibility = View.VISIBLE
+                } else {
+                    nextButton.visibility = View.INVISIBLE
+                    prevButton.visibility = View.VISIBLE
+                }
+
             }
 
         })
@@ -59,6 +80,14 @@ class ShopFragment : Fragment() {
                     //make the display visible
                     shop_gold_balance_icon.visibility = View.VISIBLE
                 }
+
+        nextButton.setOnClickListener {
+            slider.setCurrentItem(currentPage+1)
+        }
+
+        prevButton.setOnClickListener {
+            slider.setCurrentItem(currentPage-1)
+        }
 
         return view
     }

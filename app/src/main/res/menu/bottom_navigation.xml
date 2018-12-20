@@ -16,10 +16,6 @@
             android:icon="@drawable/ic_coin"
             android:title="@string/coins" />
 
-        <item
-            android:id="@+id/nav_gamble"
-            android:icon="@drawable/ic_settings"
-            android:title="@string/gambling" />
 
         <item
             android:id="@+id/nav_profile"

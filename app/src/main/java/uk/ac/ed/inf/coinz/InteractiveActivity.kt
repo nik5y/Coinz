@@ -26,11 +26,7 @@ class InteractiveActivity : AppCompatActivity() {
                     createdFrag = CoinsFragment()
                 }
             }
-            R.id.nav_gamble -> {
-                if (!(currentFrag is GambleFragment)) {
-                    createdFrag = GambleFragment()
-                }
-            }
+
             R.id.nav_profile -> {
                 if (!(currentFrag is ProfileFragment)) {
                     createdFrag = ProfileFragment()

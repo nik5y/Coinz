@@ -29,17 +29,16 @@
         android:layout_height="51dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginStart="8dp"
 
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/shop_pager" />
+        app:layout_constraintEnd_toStartOf="@+id/shop_page_back_button"
+        app:layout_constraintStart_toEndOf="@+id/shop_page_next_button"
+        app:layout_constraintTop_toBottomOf="@+id/shop_pager"
+        app:layout_constraintVertical_bias="0.636" />
 
     <TextView
         android:id="@+id/shop_gold_balance"
@@ -72,5 +71,32 @@
         app:layout_constraintTop_toTopOf="parent"
         android:visibility="invisible"
         app:srcCompat="@drawable/peny" />
+
+    <Button
+        android:id="@+id/shop_page_next_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@android:color/transparent"
+        android:text="@string/next"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/shop_pager" />
+
+    <Button
+        android:id="@+id/shop_page_back_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@android:color/transparent"
+        android:text="@string/previous"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/shop_pager" />
 
 </android.support.constraint.ConstraintLayout>

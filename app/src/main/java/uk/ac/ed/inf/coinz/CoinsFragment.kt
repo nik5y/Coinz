@@ -30,8 +30,13 @@ class CoinsFragment : Fragment() {
 
         recycler.layoutManager = LinearLayoutManager(activity, LinearLayout.VERTICAL, false)
 
+        //A custom callback function created so that it would be possible to return an array of coins from the asynchronous
+        //task of retrieving coins from the database.
+
         readData(object : MyCallback {
             override fun onCallback(value: ArrayList<CoinRecyclerViewClass>) {
+
+                //The returned value, i.e. coin array is fed in to the adapter
                 recycler.adapter = CoinRecyclerAdapter(context!!, value)
             }
         })
@@ -61,7 +66,7 @@ class CoinsFragment : Fragment() {
                 for (key in coinMaps.keys) {
                     @Suppress("UNCHECKED_CAST")//due to the nature of coin storing in database, it is appropriate to suppress warning
                     val coinInfoMap = coinMaps[key] as MutableMap<String, String>
-                    //coinInfoMap["currency"]
+
                     coinsArray.add(CoinRecyclerViewClass(key, coinInfoMap["currency"]!!, coinInfoMap["value"]!!,
                             resources.getIdentifier(coinInfoMap["currency"]!!.toLowerCase(), "drawable", "uk.ac.ed.inf.coinz")
                             ,coinInfoMap["sentBy"]!!, coinInfoMap["collectedBy"]!!))
@@ -81,7 +86,6 @@ class CoinsFragment : Fragment() {
         }
 
     }
-
 
 }
 
