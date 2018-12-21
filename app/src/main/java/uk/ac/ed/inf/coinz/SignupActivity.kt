@@ -87,7 +87,6 @@ class SignupActivity : AppCompatActivity() {
 
         val alert = AlertDialog.Builder(this)
         alert.apply {
-            //setTitle("Error:")
             setPositiveButton("OK", null)
             setCancelable(true)
             create()

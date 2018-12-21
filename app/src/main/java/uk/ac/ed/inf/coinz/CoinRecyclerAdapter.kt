@@ -30,6 +30,8 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
     val firestore = FirebaseFirestore.getInstance()
     val email = FirebaseAuth.getInstance().currentUser!!.email.toString()
 
+
+    //Sets up the views inside each item of the RecyclerView
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
@@ -39,6 +41,7 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
         holder.coinRecyclerValue.text = coin.value.toDouble().format(3)
         holder.coinRecyclerImage.setImageResource(coin.iconId)
 
+        //If the coin was sent by somebody, then display that
 
         if (coin.sentBy.isNotEmpty()) {
             holder.coinRecyclerItemCollectedBy.text = "From: ${coin.sentBy}"
@@ -51,16 +54,33 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
         return items.size
     }
 
+
+    //Setting up each item in the RecyclerView
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int)
             : CoinRecyclerAdapter.ViewHolder {
 
-        val v = CoinRecyclerAdapter.ViewHolder(LayoutInflater.from(context)
+        val alert = AlertDialog.Builder(context)
+        alert.apply {
+            setPositiveButton("OK", null)
+            setCancelable(true)
+
+            create()
+        }
+
+        val view = CoinRecyclerAdapter.ViewHolder(LayoutInflater.from(context)
                 .inflate(R.layout.coin_recycler_item, parent, false))
 
+        //onClickListener for the imageView that opens the send to user dialog
 
-        v.coinRecyclerSendCoin.setOnClickListener { _ ->
+        view.coinRecyclerSendCoin.setOnClickListener { _ ->
 
-            //get the coin count
+            /**
+             * This is following the coursework specifications:
+             *
+             * get the coin banked count to further compare whether the user has banked 25 coins today
+             * in order to be able to send "spare change" to other users
+             */
+
 
             var bankedCoinCount : Int
 
@@ -69,23 +89,26 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
 
             coinCounterPath.get().addOnSuccessListener { count ->
 
+                /**
+                 * checks whether the count has been initialised today. this is done so that if midnight hits
+                 * when the user is in the InteractiveActivity, he will not be able to send coins in the new day,
+                 * even if the MapsActivity has not restarted
+                 */
+
                 if (count.get("initialised") != todayYMD()) {
                     resetCoinCounter(coinCounterPath)
-                    bankedCoinCount = count.get("count").toString().toInt()
-                    setUpSendingCoin( v)
+                    alert.setMessage("Only spare change can be sent to other users!" +
+                            " Bank 25 more coin(s) to be able to send!").show()
                 } else {
+
+                    //else checks the banked coin count to be above 25
+
                     bankedCoinCount = count.get("count").toString().toInt()
-                    if (bankedCoinCount >= 25) {
-                        setUpSendingCoin( v)
+                    if (bankedCoinCount > 25) {
+                        setUpSendingCoin(view)
                     } else {
-                        val alert = AlertDialog.Builder(context)
-                        alert.apply {
-                            setPositiveButton("OK", null)
-                            setCancelable(true)
-                            alert.setMessage("Only spare change can be sent to other users!" +
-                                    " Bank ${25 - bankedCoinCount} more coin(s) to be able to send!")
-                            create().show()
-                        }
+                        alert.setMessage("Only spare change can be sent to other users!" +
+                                " Bank ${26 - bankedCoinCount} more coin(s) to be able to send!").show()
                     }
                 }
 
@@ -93,14 +116,12 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
 
         }
 
-        //deleting coins
-
-        v.coinRecyclerBankCoin.setOnClickListener {
+        view.coinRecyclerBankCoin.setOnClickListener {
 
             var bankedCoinCount : Int
-            val coinId = items[v.adapterPosition].id
-            val coinCurrency = items[v.adapterPosition].currency
-            val coinValue = items[v.adapterPosition].value
+            val coinId = items[view.adapterPosition].id
+            val coinCurrency = items[view.adapterPosition].currency
+            val coinValue = items[view.adapterPosition].value
 
             val coinCounterPath = firestore.collection("Users").document(email).collection("Account Information")
                     .document("Banked Coin Counter")
@@ -111,15 +132,15 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
                     resetCoinCounter(coinCounterPath)
                     bankedCoinCount = count.get("count").toString().toInt()
                     addCoinToBank(coinId,coinCurrency,coinValue)
-                    items.removeAt(v.adapterPosition)
-                    notifyItemRemoved(v.adapterPosition)
+                    items.removeAt(view.adapterPosition)
+                    notifyItemRemoved(view.adapterPosition)
                 } else {
                     bankedCoinCount = count.get("count").toString().toInt()
                     //either below given limit or if it has been sent by somebody (identified by the s_ prefix)
                     if (bankedCoinCount < 25 || coinId.startsWith("s_"))  {
                             addCoinToBank(coinId, coinCurrency, coinValue)
-                            items.removeAt(v.adapterPosition)
-                            notifyItemRemoved(v.adapterPosition)
+                            items.removeAt(view.adapterPosition)
+                            notifyItemRemoved(view.adapterPosition)
                         } else {
                         val alert = AlertDialog.Builder(context)
                         alert.apply {
@@ -133,16 +154,22 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
 
             }
         }
-        return v
+        return view
     }
+
+    //Set up of the dialog popup that allows for sending coins
 
     private fun setUpSendingCoin(v: ViewHolder) {
 
-            val coinId = items[v.adapterPosition].id
-            val coinCurrency = items[v.adapterPosition].currency
-            val coinValue = items[v.adapterPosition].value
-            val iconId = items[v.adapterPosition].iconId
-            val collectedBy = items[v.adapterPosition].collectedBy
+        //Retrieves the the information about the coin from the item view
+
+            val adapterPosition = v.adapterPosition
+
+            val coinId = items[adapterPosition].id
+            val coinCurrency = items[adapterPosition].currency
+            val coinValue = items[adapterPosition].value
+            val iconId = items[adapterPosition].iconId
+            val collectedBy = items[adapterPosition].collectedBy
 
             //SENDING COINS
 
@@ -152,17 +179,18 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
             dialog.setContentView(R.layout.coin_recycler_dialog)
             dialog.window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-        dialog.coin_recycler_dialog_coinValue.text = coinValue
-        dialog.coin_recycler_dialog_coin_currency.text = coinCurrency
+            dialog.coin_recycler_dialog_coinValue.text = coinValue
+            dialog.coin_recycler_dialog_coin_currency.text = coinCurrency
             dialog.coin_recycler_dialog_image.setImageResource(iconId)
             dialog.show()
 
+            //sets up a onclicklistener to finally send the coin to the specified user
+
             dialog.coin_recycler_dialog_send_coin.setOnClickListener {
-                sendCoinToUser(v.adapterPosition, coinId, coinCurrency, coinValue, collectedBy, dialog)
+                sendCoinToUser(adapterPosition, coinId, coinCurrency, coinValue, collectedBy, dialog)
             }
 
         }
-
 
     //todo just a reminder that the map is downloaded locally cause if another user logs in the map will already be downloaded so that's nice
 
@@ -203,6 +231,7 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
 
     }
 
+    //Remove coin from current users database and adds its ID to Sent Coins TOday, so that it does not reappear on the map
     @SuppressLint("LogNotTimber")
     fun removeCoinFromWallet(firestore: FirebaseFirestore, email: String, coinId: String, coinCurrency: String, coinValue: String, storeLocation: String) {
 
@@ -231,7 +260,11 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
                 }
     }
 
+    //The method that performs the coin send to another user
+
     private fun sendCoinToUser(position: Int, coinId: String, coinCurrency: String, coinValue: String, collectedBy : String, dialog: Dialog) {
+
+        //retrieves the receiver email from the dialog EditText
 
         val receiverEmail = dialog.coin_recycler_dialog_enter_email.text.toString().toLowerCase()
 
@@ -241,11 +274,27 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
             setCancelable(true)
             create()
         }
+
         when {
+
+            //checks if the input is valid
 
             receiverEmail.isEmpty() -> alert.setMessage("Please enter the email").show()
 
+            /**
+             * checks if the coin is trying to be sent to the same user
+             * this would allow for abusing the system, as sent coins, as per coursework specifications,
+             * can be banked no matter the banked coin count. hence, users would be able to send coins to themselves
+             * once they would hit the 25 banking limit.
+             */
+
             email == receiverEmail -> alert.setMessage("Sorry, but you can't send coins to yourself").show()
+
+            /**
+             * with similar logic, this would stop users from abusing the sending system by setting up two accounts
+             * and, once hit the 25 banking limit, send the coin to a dummy account and then send the coin back to the user
+             * in order to bank it.
+             */
 
             receiverEmail == collectedBy -> alert.setMessage("Sorry, but you can't send a coin to the person that has originally collected it").show()
 
@@ -253,6 +302,9 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
                 val userWalletReference = firestore.collection("Users").document(email).collection("Coins")
                 val receiverWalletReference = firestore.collection("Users").document(receiverEmail)
                 receiverWalletReference.get().addOnSuccessListener {
+
+                    //Checks the database to see whether a user under the email is stored on it
+
                     if (!it.exists()) {
                         alert.setMessage("User under this email does not exist").show()
                     } else {
@@ -261,8 +313,7 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
                                     if (document != null) {
 
                                         //can perhaps have the id changed to have the first few lines as the collected users name.
-                                        //technically A user can collect A unique coin only once. so having the id as that guarantees it'll always
-                                        //be unique. i think
+                                        //technically  i think
 
                                         //yeh
 
@@ -282,6 +333,13 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
                                             val coinInfoMap = document[coinId] as MutableMap<String, Any>
                                             coinInfoMap["sentBy"] = email
 
+                                            /**
+                                             * A user can collect A unique coin only once, so having the id as that guarantees it'll always
+                                             * be unique. This is why once the coin ID was changed once, it will not be changed furthermore.
+                                             *
+                                             * Adding the s_ prefix to the ID is further used in other places as well.
+                                             */
+
                                             if (coinId.startsWith("s_")) {
                                                 coinMap[coinId] = coinInfoMap
                                             } else {
@@ -290,13 +348,15 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
 
                                             receiverWalletReference.collection("Coins")
                                                     .document("Collected Coins").set(coinMap, SetOptions.merge())
-                                            //Remove coin from current users database and put it to Sent
+
                                             removeCoinFromWallet(firestore, email, coinId, coinCurrency, coinValue, "Sent Coins Today")
 
                                         }
 
                                     }
                                 }
+                        //removes the item from the recyclerView and updates it. Additionally, dismisses the sending dialog
+
                         items.removeAt(position)
                         notifyItemRemoved(position)
                         dialog.dismiss()
@@ -318,8 +378,11 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
             //the if check is only for the situation where the user has turned off his phone when the counter restart was supposed to happen.
 
             if (count.get("initialised").toString() == todayYMD()) {
+
+                // It was decided that only OWN coins contribute towards the counter, hence it is checked
+                // whether the coinID contains the s_ prefix, meaning that it was sent by some user
+
                 if (!coinId.startsWith("s_")) {
-                    //only own coins contribute towards the counter
                     val newCount = count.get("count").toString().toInt() + 1
                     coinCounterPath.set(CoinCounter(newCount)).addOnCompleteListener {
                         d(tag, "Banked Coin Counter Updated")
@@ -333,6 +396,7 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
         }
     }
 
+    //Resets a coin counter given a path.
     @SuppressLint("LogNotTimber", "SimpleDateFormat")
     private fun resetCoinCounter(coinCounterPath: DocumentReference) {
         coinCounterPath.run {

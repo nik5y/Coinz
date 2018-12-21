@@ -40,9 +40,6 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
-import com.r0adkll.slidr.Slidr
-import com.r0adkll.slidr.model.SlidrConfig
-import com.r0adkll.slidr.model.SlidrPosition
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.maps_dialog_rates.*
 import org.json.JSONObject
@@ -89,9 +86,13 @@ class MapsActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
+        //Check if the user is signed in, if not, go to LoginAcitivity
+
         if (mAuth.currentUser == null) {
             goToLogin()
         }
+
+        //Set the dateCreated variable to today, to take note when the activity was created
 
         dateCreated =  todayYMD()
 
@@ -103,9 +104,15 @@ class MapsActivity : AppCompatActivity(),
             setCancelable(true)
         }
 
+        //set up an alarm manager for sent and banked coin deletion
+
         setDailyCoinDelete()
 
+        //take note of the currently signed in user's email, used throughout the activity
+
         userEmail = mAuth.currentUser?.email
+
+        //initialise the map and set up the coins and their collection
 
         Mapbox.getInstance(applicationContext, getString(R.string.access_token))
 
@@ -113,15 +120,13 @@ class MapsActivity : AppCompatActivity(),
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
 
-        //locating
-
-        val config = SlidrConfig.Builder().position(SlidrPosition.RIGHT).build()
-
-        Slidr.attach(this, config)
+        //initialise the onClickListener allowing to go to InteractiveActivity
 
         maps_go_to_interactive.setOnClickListener {
             goToInteractive()
         }
+
+        //initialise the onClickListener allowing to go see the rates dialog, if the bonus was bought
 
         maps_open_rates_dialog.setOnClickListener {
 
@@ -135,13 +140,12 @@ class MapsActivity : AppCompatActivity(),
                             alert.setMessage("Rate List unavailable! Buy the Bonus!").create().show()
                         }
                     }
-
         }
     }
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
 
-        //DOWNLOADING
+        //DOWNLOADING MAP
 
         downloadMap()
         val coins = getMap()
@@ -149,17 +153,21 @@ class MapsActivity : AppCompatActivity(),
 
         map = mapboxMap
 
+        //Adding coins to map
+
         addCoinsToMap(map, coinFeatures)
+
+        //Enabling location
+
+        enableLocation()
+
+        //Setting up the coin collection
 
         map?.setOnMarkerClickListener {
             coinCollect(it)
             true
         }
-
-        enableLocation()
     }
-
-    //DOWNLOADER
 
     private fun enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -256,6 +264,8 @@ class MapsActivity : AppCompatActivity(),
         locationEngine?.requestLocationUpdates()
     }
 
+    //Intent that apart from going to LoginActivity, ensures that if the back button was clicked in the next activity,
+    //the application would not go back to this activity, but instead would close.
 
     private fun goToLogin() {
         val intent = Intent(this, LoginActivity::class.java)
@@ -265,10 +275,11 @@ class MapsActivity : AppCompatActivity(),
 
     //<LIFECYCLES>
 
-
     @SuppressWarnings("MissingPermission")
     override fun onStart() {
         super.onStart()
+
+        //making sure the location engine is on
 
         if (locationEngine != null) {
             locationEngine!!.requestLocationUpdates()
@@ -281,6 +292,8 @@ class MapsActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
+
+        //if the user was to pause the activity when midnight hit, the map would still get recreated when the user comes back
 
         if(dateCreated !=  todayYMD()){
             reCreateMap()
@@ -328,8 +341,21 @@ class MapsActivity : AppCompatActivity(),
     @VisibleForTesting
     fun coinCollect(marker: Marker) {
 
+        /**
+         * checking if the map was created today or not.
+         * this check is here to make sure the user is unable to collect coins from previous days,
+         * in the situation where the map activity was open when midnight hit
+         */
+
+
         if (dateCreated != todayYMD()) {
             reCreateMap()
+
+            /**
+             *  additionally, checks if the location engine has been initialised, as it is an asynchronous task
+             *  and sometimes the coins are displayed before the location is established
+             */
+
         } else if (locationEngine == null || locationEngine!!.lastLocation == null) {
             alert.apply {
                 setMessage("Please wait until your location is found")
@@ -388,6 +414,7 @@ class MapsActivity : AppCompatActivity(),
                                             }
 
                                             //If in range, remove from map, store in database, and add to collected counter
+                                            //Additionally, display the attributes of the collected coin in a Toast
 
                                             if (markerPos.distanceTo(currentPos) <= coinCollectRange) {
 
@@ -401,19 +428,22 @@ class MapsActivity : AppCompatActivity(),
                                                 Toast.makeText(this@MapsActivity, "Collected ${currVal[0]} of value ${currVal[1].toDouble().format(3)}", Toast.LENGTH_LONG).show()
 
                                             } else {
+
+                                                //if not in range, display how much out of range is the user from the coin
+
                                                 Toast.makeText(this@MapsActivity, "Coin ${(markerPos.distanceTo(currentPos) - coinCollectRange).format(0)}m out of Range!", Toast.LENGTH_LONG).show()
                                             }
                                         }
                             }
 
                             else {
+
+                                //if collected the max amount corresponding to the users level, display an alert notifying that
+
                                 alert.setMessage("You have collected the maximum amount of coins for today ($allowedCoinsToCollect)! Level up to collect more!").create().show()
                             }
                         }
             }
-
-
-
         }
     }
 
@@ -505,19 +535,22 @@ class MapsActivity : AppCompatActivity(),
                             valueMarkerBonus = valueBonus["activated"] as Boolean
                         }.addOnCompleteListener {_->
 
-                            //Loop over all features (coins) in the provided feature collection of the json map and tetrieve information about the coins
+                            //Loop over all features (coins) in the provided feature collection of the json map and retrieve their IDs
 
                             for (i in coinFeatures.features()!!) {
 
-                                val geometry = i.geometry() as Point
-                                val point = geometry.coordinates()
-                                val coinCurrency = i.getStringProperty("currency")
                                 val coinId = i.getStringProperty("id")
-                                val coinValue = i.getStringProperty("value")
 
-                                //Depending on different combination of marker appearance bonuses, assign different icons to them
+                                //if the retrieved id is not in coinsToRemove, continue
 
                                 if (!(coinsToRemove.contains(coinId))) {
+
+                                    val geometry = i.geometry() as Point
+                                    val point = geometry.coordinates()
+                                    val coinCurrency = i.getStringProperty("currency")
+                                    val coinValue = i.getStringProperty("value")
+
+                                    //Depending on different combination of marker appearance bonuses, assign different icons to them
 
                                     iconId = if (currencyMarkerBonus) {
                                         if (valueMarkerBonus) {
@@ -533,7 +566,13 @@ class MapsActivity : AppCompatActivity(),
                                         }
                                     }
 
-                                    map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title("$coinId $coinCurrency $coinValue").icon(IconFactory.getInstance(this).fromResource(iconId)))
+                                    /**
+                                     * add the marker to the map with the extracted position, given icon, and a custom title containing
+                                     * coin attributes that are further used for coin collection
+                                     */
+
+                                    map?.addMarker(MarkerOptions().position(LatLng(point[1], point[0])).title("$coinId $coinCurrency $coinValue")
+                                            .icon(IconFactory.getInstance(this).fromResource(iconId)))
                                 }
                             }
 
@@ -541,6 +580,8 @@ class MapsActivity : AppCompatActivity(),
 
                         }
                     }
+
+                    //altering minor functionality of the mapview
 
                     map?.uiSettings?.isAttributionEnabled = false
                     map?.uiSettings?.isZoomControlsEnabled = true
@@ -569,7 +610,7 @@ class MapsActivity : AppCompatActivity(),
 
     private fun reCreateMap() {
 
-        //Restart Coin Counter:
+        //Restart Coin Counters:
 
         val path = firestore.collection("Users").document(userEmail!!)
 
@@ -625,10 +666,6 @@ class MapsActivity : AppCompatActivity(),
             Log.d(tag, "[recreateMap] Banked Coins Today NOT Deleted")
         }
 
-        //UPDATE DATE CREATED VARIABLE
-
-        dateCreated = todayYMD()
-
         //RESTART ACTIVITY
 
         goToMaps()
@@ -636,6 +673,8 @@ class MapsActivity : AppCompatActivity(),
         Toast.makeText(this, "Restarted Map for ${todayYMD()}", Toast.LENGTH_LONG).show()
 
     }
+
+    //intent to open the interactive activity. additionally, overriden the transition animation with custom anim xmls.
 
     private fun goToInteractive() {
         val intent = Intent(this, InteractiveActivity::class.java)
@@ -645,23 +684,37 @@ class MapsActivity : AppCompatActivity(),
         overridePendingTransition(R.anim.right_slide_in, R.anim.left_slide_out)
     }
 
+    //intent to go to MapsActivity, i.e. restart the activity
+
     private fun goToMaps() {
 
         val intent = Intent(this, MapsActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
 
     }
 
+    /**
+     * Checks whether the map has been downloaded for today.
+     * if NOT, downloads the map with the provided downloader interface
+     * and stores it, along side the extracted rates in Shared Preferences
+     *
+     * If the map has already been downloaded today, the function does nothing of significance.
+     */
+
     private fun downloadMap() {
 
         val date: String = todayYMD()
-        val mapURL = "http://homepages.inf.ed.ac.uk/stg/coinz/$date/coinzmap.geojson"
         val sharedPreferences = getSharedPreferences(sharedPREFS, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
+        /**
+         * compares todays value to the downloadDATE in shared preferences
+         */
 
         if (sharedPreferences.getString(downloadDATE, "default") != date) {
             Log.d(tag, "Downloading and storing map for $date")
+            val mapURL = "http://homepages.inf.ed.ac.uk/stg/coinz/$date/coinzmap.geojson"
             val coins  = DownloadFileTask(DownloadCompleteRunner).execute(mapURL).get()
             editor.putString(downloadDATE, date)
             editor.putString(jsonMAP, coins)
@@ -683,12 +736,17 @@ class MapsActivity : AppCompatActivity(),
 
     }
 
+    //Returns map from shared preferences
+
     private fun getMap(): String {
 
         val sharedPreferences = getSharedPreferences(sharedPREFS, Context.MODE_PRIVATE)
 
         return sharedPreferences.getString(jsonMAP, "No Map")
     }
+
+
+    //Sets up the dialog containing the information about rates for today
 
     @SuppressLint("SetTextI18n")
     fun setupDialog(context: Context) : Dialog {
@@ -708,6 +766,8 @@ class MapsActivity : AppCompatActivity(),
 
         return dialog
     }
+
+    //adds 1 to the counter of collected coins, once a coin was successfully collected
 
     private fun addToCoinCounter() {
 
