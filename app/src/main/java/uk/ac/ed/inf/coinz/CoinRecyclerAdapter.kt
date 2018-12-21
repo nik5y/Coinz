@@ -104,7 +104,7 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
                     //else checks the banked coin count to be above 25
 
                     bankedCoinCount = count.get("count").toString().toInt()
-                    if (bankedCoinCount > 25) {
+                    if (bankedCoinCount >= 25) {
                         setUpSendingCoin(view)
                     } else {
                         alert.setMessage("Only spare change can be sent to other users!" +
@@ -323,11 +323,6 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
                         userWalletReference.document("Collected Coins").get()
                                 .addOnSuccessListener { document ->
                                     if (document != null) {
-
-                                        //can perhaps have the id changed to have the first few lines as the collected users name.
-                                        //technically  i think
-
-                                        //yeh
 
                                         //can also have it to start with s_ so that we can check if it starts with that, and if it doesn't, rename
 
