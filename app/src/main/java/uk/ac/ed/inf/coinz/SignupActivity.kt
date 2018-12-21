@@ -104,6 +104,11 @@ class SignupActivity : AppCompatActivity() {
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener {
                         if (!it.isSuccessful) return@addOnCompleteListener
+
+                        //if both the application and FirebaseAuth validatioin is passed,
+                        //the create user method will complete. At this stage it is possible to
+                        //store the users information in the DATABASE
+
                         Log.d(tag, "Created user with ID ${it.result?.user?.uid}")
                         mAuth.signInWithEmailAndPassword(email, password)
                         uploadAllInformation(username, email)

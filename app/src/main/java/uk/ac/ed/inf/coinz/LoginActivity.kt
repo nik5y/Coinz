@@ -59,6 +59,10 @@ class LoginActivity : AppCompatActivity() {
         } else {
             mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
                 if (!it.isSuccessful) return@addOnCompleteListener
+
+                //if both the application and FirebaseAuth validation is passed,
+                //the create signin method will complete
+
                 Log.d(tag, "Login Successful. Going to MapsActivity")
                 goToMap()
             }.addOnFailureListener {

@@ -27,8 +27,8 @@ class ShopFragment : Fragment() {
     private var currentPage = 0
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val view = inflater.inflate(R.layout.fragment_shop, container, false)
 
+        val view = inflater.inflate(R.layout.fragment_shop, container, false)
         slider = view.findViewById(R.id.shop_pager)
         pageDots = view.findViewById(R.id.shop_page_dots)
         prevButton = view.findViewById(R.id.shop_page_back_button)

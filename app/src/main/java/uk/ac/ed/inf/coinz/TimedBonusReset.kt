@@ -18,7 +18,6 @@ class TimedBonusReset : BroadcastReceiver() {
     override fun onReceive(p0: Context?, p1: Intent?) {
 
         val bonus = p1!!.getStringExtra("bonus")
-        val timed = p1.getBooleanExtra("timed", false)
 
 
         val firestore = FirebaseFirestore.getInstance()
@@ -28,12 +27,6 @@ class TimedBonusReset : BroadcastReceiver() {
 
 
         path.collection("Bonuses").document(bonus).run {
-
-            //if it is not a bonus with an expiration date, update the "updated" field. put activated to false for all
-
-            if (!timed) {
-                update("updated", todayYMD())
-            }
             update("activated", false)
         }.addOnSuccessListener {
             Log.d(tag,"Resetting $bonus bonus to false")

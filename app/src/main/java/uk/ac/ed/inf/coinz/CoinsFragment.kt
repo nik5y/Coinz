@@ -61,6 +61,7 @@ class CoinsFragment : Fragment() {
             //necessary check, or else it crashes when empty
 
             if (coinMaps == null) {
+                coins_fragment_nocoins.visibility = View.VISIBLE
                 return@addOnSuccessListener
             } else {
                 for (key in coinMaps.keys) {

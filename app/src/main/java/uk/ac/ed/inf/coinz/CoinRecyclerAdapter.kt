@@ -204,11 +204,17 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
         val coinRecyclerItemCollectedBy = view.coin_recycler_item_collectedBy as TextView
     }
 
+    /**
+     * BANKING THE COIN
+     */
+
     @SuppressLint("LogNotTimber")
     fun addCoinToBank(coinId: String, coinCurrency: String, coinValue: String) {
 
         val bankReference = firestore.collection("Users").document(email)
                 .collection("Account Information").document("Gold Balance")
+
+        //Get user balance from Database and todays rates from Shared Preferences
 
         bankReference.get().addOnSuccessListener {
             var goldBalance = it.data!!["goldBalance"] as Double
@@ -219,19 +225,25 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
 
             goldBalance += coinValue.toDouble() * rate.toDouble()
 
+            //update new gold balance
+
             bankReference.set(Bank(goldBalance)).addOnCompleteListener { _ ->
                 d(tag, "Coin Successfully Banked!")
                 addToCoinCounter(coinId, email, firestore)
             }.addOnFailureListener { _ ->
                 d(tag, "Coin NOT Banked!")
             }
+
+            //remove coin from wallet and store in Banked COins TOday
+
             removeCoinFromWallet(firestore, email, coinId, coinCurrency, coinValue, "Banked Coins Today")
         }
 
 
     }
 
-    //Remove coin from current users database and adds its ID to Sent Coins TOday, so that it does not reappear on the map
+    //Remove coin from current users database and adds its ID to Database document passed as the storeLocation argument
+    //, so that it does not reappear on the map
     @SuppressLint("LogNotTimber")
     fun removeCoinFromWallet(firestore: FirebaseFirestore, email: String, coinId: String, coinCurrency: String, coinValue: String, storeLocation: String) {
 

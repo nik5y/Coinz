@@ -41,6 +41,8 @@ class ProfileFragment : Fragment() {
             startActivityForResult(intent, 66)
         }
 
+
+        //allows the user to choose another profile picture. method implemented similarly as in signupActivity
         view.profile_picture_confirm.setOnClickListener {
 
             val name = FirebaseAuth.getInstance().currentUser!!.uid
@@ -60,8 +62,6 @@ class ProfileFragment : Fragment() {
 
         return view
 
-
-
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -74,7 +74,12 @@ class ProfileFragment : Fragment() {
 
             val imageBmp = MediaStore.Images.Media.getBitmap(activity!!.contentResolver, profilePicture)
 
+            //display the newly selected picture
+
             profile_picture.setImageBitmap(imageBmp)
+
+            //allow for the user to confirm the picture selection and store it in the Database and Storage
+
             profile_picture_confirm.visibility = View.VISIBLE
 
         }
@@ -147,12 +152,6 @@ class ProfileFragment : Fragment() {
 
                             fragmentManager!!.beginTransaction().detach(this).attach(this).commit()
 
-                            /*val newLevelPrice = LevelingSystem().levelPrice(lvl.toInt() + 1).toString().substringBefore(".")
-                            view.profile_levelup.text = "Level up for $newLevelPrice GOLD"
-
-                            view.profile_gold_value.text = (goldBalance - levelPrice).format(3)
-                            view.profile_level_value.text = (lvl.toInt() + 1).toString()*/
-
                         } else {
                             val alert = AlertDialog.Builder(context)
 
@@ -172,11 +171,13 @@ class ProfileFragment : Fragment() {
 
         }
 
-
+        //retrieve banked count
 
         userReference.document("Banked Coin Counter").get().addOnSuccessListener { counter->
             view.profile_banked_value.text = counter["count"].toString()
         }
+
+        //retrieve sent collected count
 
         userReference.document("Collected Coin Counter").get().addOnSuccessListener { counter->
             view.profile_collected_value.text = counter["count"].toString()

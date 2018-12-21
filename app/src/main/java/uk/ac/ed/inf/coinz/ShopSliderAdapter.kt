@@ -121,7 +121,7 @@ class ShopSliderAdapter(private val activity: FragmentActivity, private val cont
 
                             //update balance on screen
 
-                            containerView.shop_gold_balance.text = gold.format(2)
+                            containerView.shop_gold_balance.text = gold.format(3)
 
                             //update button appearance
 
@@ -135,12 +135,13 @@ class ShopSliderAdapter(private val activity: FragmentActivity, private val cont
                             if (bonusTimed[position]) {
                                 //expiration variable:
                                 val expiration = Date()
-                                expiration.seconds = expiration.seconds + 24*60*60
+                                val expireInHours = 24
+                                expiration.seconds = expiration.seconds + expireInHours*60*60
                                 bonusPath.run {
                                     update("activated", true)
                                     update("expires", expiration)
                                 }
-                                setBonusResetTimer(24, position)
+                                setBonusResetTimer(expireInHours, position)
                             } else {
                                 bonusPath.run {
                                     update("activated", true)
@@ -178,7 +179,6 @@ class ShopSliderAdapter(private val activity: FragmentActivity, private val cont
         val alarmMan = activity.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, TimedBonusReset::class.java).apply {
             putExtra("bonus", bonusTitles[position])
-            putExtra("timed", bonusTimed[position])
         }
         val pendIntent = PendingIntent.getBroadcast(context, position+5, intent, PendingIntent.FLAG_CANCEL_CURRENT)
 
