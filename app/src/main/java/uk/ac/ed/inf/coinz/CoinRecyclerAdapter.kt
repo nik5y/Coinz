@@ -108,7 +108,7 @@ class CoinRecyclerAdapter(var context: Context, private val items : ArrayList<Co
                         setUpSendingCoin(view)
                     } else {
                         alert.setMessage("Only spare change can be sent to other users!" +
-                                " Bank ${26 - bankedCoinCount} more coin(s) to be able to send!").show()
+                                " Bank ${25 - bankedCoinCount} more coin(s) to be able to send!").show()
                     }
                 }
 

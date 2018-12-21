@@ -408,9 +408,9 @@ class MapsActivity : AppCompatActivity(),
                                             //If activated, augment range, if not, set to default
 
                                             coinCollectRange = if (coinCollectRangeBonus) {
-                                                250.0
+                                                50.0
                                             } else {
-                                                100.0
+                                                25.0
                                             }
 
                                             //If in range, remove from map, store in database, and add to collected counter
